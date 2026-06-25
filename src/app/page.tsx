@@ -9,7 +9,14 @@ import { OptimizerCard } from '@/components/OptimizerCard';
 import { Legend } from '@/components/Legend';
 
 // The 3D scene touches WebGL/window, so it must only render on the client.
-const Scene = dynamic(() => import('@/three/Scene'), { ssr: false });
+const Scene = dynamic(() => import('@/three/Scene'), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-full w-full items-center justify-center text-sm text-white/40">
+      Loading 3D scene…
+    </div>
+  ),
+});
 
 export default function Page() {
   useSimLoop();
