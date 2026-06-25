@@ -64,8 +64,8 @@ export function buildWorld(p: ScenarioParams): World {
     floors.push({ floor: f, width, height, cells: new Uint8Array(width * height) });
   }
 
-  if (p.scenario === 'apartment') addColumns(floors, 5, 4);
-  else addMachineBlocks(floors, 7, 5);
+  if (p.scenario === 'apartment') addColumns(floors, 6, 5);
+  else addMachineBlocks(floors, 8, 6);
 
   const elevators = addElevators(floors, p);
   const stations = p.scenario === 'apartment' ? apartmentStations(floors) : factoryStations(floors);
@@ -153,7 +153,7 @@ function apartmentStations(floors: FloorGrid[]): Station[] {
   // Install points scattered across each upper floor.
   for (let f = 1; f < floors.length; f++) {
     const g = floors[f];
-    for (const c of lattice(g, 3, g.width - 3, 3, g.height - 3, 5, 4)) {
+    for (const c of lattice(g, 3, g.width - 3, 3, g.height - 3, 7, 6)) {
       stations.push({ id: id++, role: 'dropoff', label: 'install-zone', ...c, floor: f });
     }
   }

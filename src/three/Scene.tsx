@@ -26,10 +26,10 @@ export default function Scene() {
       shadows
       dpr={[1, 2]}
       gl={{ antialias: true }}
-      camera={{ position: [span * 0.85, top + span * 0.6, span * 0.85], fov: 42 }}
+      camera={{ position: [span * 0.72, top + span * 0.42, span * 0.72], fov: 42 }}
     >
       <color attach="background" args={['#0a0c12']} />
-      <fog attach="fog" args={['#0a0c12', span * 1.6, span * 4.5]} />
+      <fog attach="fog" args={['#0a0c12', span * 2.2, span * 6]} />
 
       <hemisphereLight intensity={0.55} color="#cde3ff" groundColor="#1a2030" />
       <ambientLight intensity={0.25} />
@@ -64,7 +64,7 @@ function CameraRig({ world }: { world: World }) {
   useEffect(() => {
     const span = Math.max(world.width, world.height);
     const top = (world.numFloors - 1) * FLOOR_GAP;
-    camera.position.set(span * 0.85, top + span * 0.6, span * 0.85);
+    camera.position.set(span * 0.72, top + span * 0.42, span * 0.72);
     camera.near = 0.1;
     camera.far = span * 10;
     camera.updateProjectionMatrix();

@@ -35,8 +35,8 @@ export function floorHeight(floor: number): number {
 export const COLORS = {
   slab: '#1b2435',
   slabEdge: '#3a4a66',
-  column: '#46566f',
-  machine: '#5a6378',
+  column: '#313e56',
+  machine: '#3b485f',
   shaft: '#7dd3fc',
   car: '#e2e8f0',
   pickup: '#34d399',

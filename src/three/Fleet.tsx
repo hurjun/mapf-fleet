@@ -79,8 +79,12 @@ const RobotMesh = memo(function RobotMesh({ id, kind }: { id: number; kind: Robo
     if (dx * dx + dz * dz > 1e-5) heading.current = Math.atan2(dx, dz);
     g.rotation.y += (heading.current - g.rotation.y) * Math.min(1, dt * 10);
 
-    // State color.
-    if (bodyMat.current) bodyMat.current.color.lerp(tmpColor.current.set(robotColor(r)), 0.25);
+    // State color (also drives a soft emissive glow so robots stand out).
+    if (bodyMat.current) {
+      const c = tmpColor.current.set(robotColor(r));
+      bodyMat.current.color.lerp(c, 0.25);
+      bodyMat.current.emissive.lerp(c, 0.25);
+    }
 
     // Carried crate.
     if (crate.current) crate.current.visible = r.carrying;
@@ -88,11 +92,14 @@ const RobotMesh = memo(function RobotMesh({ id, kind }: { id: number; kind: Robo
 
   return (
     <group ref={group}>
-      <RobotBody kind={kind} bodyMat={bodyMat} />
-      <mesh ref={crate} position={[0, 0.55, 0]} visible={false} castShadow>
-        <boxGeometry args={[0.34, 0.3, 0.34]} />
-        <meshStandardMaterial color={CRATE} roughness={0.8} />
-      </mesh>
+      {/* Scaled up a touch so the fleet reads clearly against the structure. */}
+      <group scale={1.35}>
+        <RobotBody kind={kind} bodyMat={bodyMat} />
+        <mesh ref={crate} position={[0, 0.55, 0]} visible={false} castShadow>
+          <boxGeometry args={[0.34, 0.3, 0.34]} />
+          <meshStandardMaterial color={CRATE} roughness={0.8} />
+        </mesh>
+      </group>
     </group>
   );
 });
@@ -108,7 +115,14 @@ function RobotBody({
   const body = (args: [number, number, number], y: number) => (
     <mesh position={[0, y, 0]} castShadow>
       <boxGeometry args={args} />
-      <meshStandardMaterial ref={bodyMat} color="#4ade80" roughness={0.55} metalness={0.25} />
+      <meshStandardMaterial
+        ref={bodyMat}
+        color="#4ade80"
+        emissive="#4ade80"
+        emissiveIntensity={0.55}
+        roughness={0.55}
+        metalness={0.25}
+      />
     </mesh>
   );
 

@@ -42,11 +42,11 @@ export function Building({ world }: { world: World }) {
         </mesh>
       ))}
 
-      <InstanceGroup positions={geometry.structures} args={[0.7, 1.5, 0.7]} color={COLORS.column} />
-      <InstanceGroup positions={geometry.pickups} args={[0.82, 0.08, 0.82]} color={COLORS.pickup} emissive />
-      <InstanceGroup positions={geometry.dropoffs} args={[0.82, 0.08, 0.82]} color={COLORS.dropoff} emissive />
-      <InstanceGroup positions={geometry.boardPads} args={[0.78, 0.1, 0.78]} color={COLORS.boardPad} emissive />
-      <InstanceGroup positions={geometry.exitPads} args={[0.78, 0.1, 0.78]} color={COLORS.exitPad} emissive />
+      <InstanceGroup positions={geometry.structures} args={[0.42, 0.9, 0.42]} color={COLORS.column} />
+      <InstanceGroup positions={geometry.pickups} args={[0.7, 0.07, 0.7]} color={COLORS.pickup} emissive />
+      <InstanceGroup positions={geometry.dropoffs} args={[0.7, 0.07, 0.7]} color={COLORS.dropoff} emissive />
+      <InstanceGroup positions={geometry.boardPads} args={[0.74, 0.09, 0.74]} color={COLORS.boardPad} emissive />
+      <InstanceGroup positions={geometry.exitPads} args={[0.74, 0.09, 0.74]} color={COLORS.exitPad} emissive />
 
       {/* Faint outer frame so the tower reads as one structure. */}
       <mesh position={[0, totalHeight / 2, 0]}>
@@ -77,7 +77,7 @@ function InstanceGroup({
         roughness={0.7}
         metalness={0.1}
         emissive={emissive ? color : '#000000'}
-        emissiveIntensity={emissive ? 0.35 : 0}
+        emissiveIntensity={emissive ? 0.22 : 0}
       />
       {positions.map((p, i) => (
         <Instance key={i} position={p} />
@@ -102,7 +102,7 @@ function buildGeometry(world: World) {
       for (let x = 0; x < width; x++) {
         if (g.cells[y * width + x] !== Cell.Wall) continue;
         if (shaft.has(`${x}|${y}`)) continue;
-        structures.push(toScene(x, y, floorHeight(g.floor) + 0.7, width, height));
+        structures.push(toScene(x, y, floorHeight(g.floor) + 0.35, width, height));
       }
     }
   }
