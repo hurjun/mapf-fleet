@@ -1,10 +1,17 @@
+'use client';
+
+import dynamic from 'next/dynamic';
+import { useSimLoop } from '@/state/useSimLoop';
+
+// The 3D scene touches WebGL/window, so it must only render on the client.
+const Scene = dynamic(() => import('@/three/Scene'), { ssr: false });
+
 export default function Page() {
+  useSimLoop();
+
   return (
-    <main className="flex h-full w-full items-center justify-center">
-      <div className="text-center">
-        <h1 className="text-2xl font-semibold tracking-tight">MAPF Fleet</h1>
-        <p className="mt-2 text-sm text-white/50">Simulator bootstrapping…</p>
-      </div>
+    <main className="relative h-full w-full">
+      <Scene />
     </main>
   );
 }
