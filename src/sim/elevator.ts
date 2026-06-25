@@ -57,14 +57,30 @@ export class ElevatorController {
     return this.riders.length;
   }
 
+  /** Drop a rider from the car (used when a robot is removed from the fleet). */
+  removeRider(robotId: number): boolean {
+    const i = this.riders.findIndex((r) => r.robotId === robotId);
+    if (i === -1) return false;
+    this.riders.splice(i, 1);
+    return true;
+  }
+
   get doorsOpen(): boolean {
     return this.state === 'doors';
   }
 
-  /** Floors that still need a stop: rider destinations plus waiting floors. */
+  /**
+   * Floors that still need a stop: rider destinations always, plus floors with
+   * a waiting robot — but only while there is room to board. A full car ignores
+   * hall calls and heads straight for its riders' destinations, otherwise it
+   * can get pinned at a floor it can never serve.
+   */
   private targets(ctx: ElevatorContext): Set<number> {
-    const set = new Set<number>(ctx.callFloors);
+    const set = new Set<number>();
     for (const r of this.riders) set.add(r.targetFloor);
+    if (this.riders.length < this.cfg.capacity) {
+      for (const f of ctx.callFloors) set.add(f);
+    }
     return set;
   }
 

@@ -40,6 +40,11 @@ export class ReservationTable {
     return this.vertices.has(vKey(floor, x, y, t));
   }
 
+  /** Release a single vertex reservation (used for temporary constraints). */
+  freeVertex(floor: number, x: number, y: number, t: number): void {
+    this.vertices.delete(vKey(floor, x, y, t));
+  }
+
   isEdgeReserved(floor: number, ax: number, ay: number, bx: number, by: number, t: number): boolean {
     return this.edges.has(eKey(floor, ax, ay, bx, by, t));
   }
