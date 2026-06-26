@@ -31,7 +31,7 @@ export function HelpOverlay() {
     <>
       <button
         onClick={() => setHelpOpen(true)}
-        className="pointer-events-auto absolute bottom-4 right-4 z-40 flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-panel text-white/70 shadow-xl backdrop-blur-md transition-colors hover:text-accent"
+        className="pointer-events-auto absolute right-3 top-3 z-40 flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-panel text-white/70 shadow-xl backdrop-blur-md transition-colors hover:text-accent md:bottom-4 md:right-4 md:top-auto"
         aria-label="Open help"
         title="Help"
       >
@@ -40,11 +40,11 @@ export function HelpOverlay() {
 
       {open && (
         <div
-          className="pointer-events-auto absolute inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+          className="pointer-events-auto absolute inset-0 z-50 flex items-center justify-center bg-black/60 p-3 backdrop-blur-sm sm:p-4"
           onClick={() => setHelpOpen(false)}
         >
           <div
-            className="max-h-[88vh] w-full max-w-md overflow-y-auto rounded-xl border border-white/10 bg-panel p-5 shadow-2xl"
+            className="max-h-[88vh] w-full max-w-md overflow-y-auto break-words rounded-xl border border-white/10 bg-panel p-4 shadow-2xl sm:p-5"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-3 flex items-start justify-between">
