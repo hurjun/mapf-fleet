@@ -97,7 +97,11 @@ const RobotMesh = memo(function RobotMesh({ id, kind }: { id: number; kind: Robo
     const dx = target.current.x - g.position.x;
     const dz = target.current.z - g.position.z;
     if (dx * dx + dz * dz > 1e-5) heading.current = Math.atan2(dx, dz);
-    g.rotation.y += (heading.current - g.rotation.y) * Math.min(1, dt * 10);
+    // Rotate along the shortest arc (normalize the delta to (-PI, PI]) so a
+    // direction reversal doesn't spin the robot the long way around.
+    let dyaw = heading.current - g.rotation.y;
+    dyaw = Math.atan2(Math.sin(dyaw), Math.cos(dyaw));
+    g.rotation.y += dyaw * Math.min(1, dt * 10);
 
     // Single-floor focus: hide robots that aren't on the focused floor.
     const sim = useSim.getState();

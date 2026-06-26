@@ -28,6 +28,12 @@ export function Trails() {
   const buffers = useRef(new Map<number, Trail>());
   const [, bump] = useState(0);
 
+  // A rebuilt world resets robot ids, so drop stale buffers to avoid trails
+  // that connect old-world positions to new ones.
+  useEffect(() => {
+    buffers.current.clear();
+  }, [world]);
+
   useEffect(() => {
     if (!show) {
       buffers.current.clear();
@@ -63,7 +69,9 @@ export function Trails() {
     <group>
       {Array.from(buffers.current.entries()).map(([id, t]) =>
         t.points.length >= 2 ? (
-          <Line key={id} points={t.points} color={t.color} lineWidth={1} transparent opacity={0.28} />
+          // Pass a fresh array so drei's geometry memo (keyed on the points
+          // reference) actually rebuilds as the trail grows/shifts.
+          <Line key={id} points={t.points.slice()} color={t.color} lineWidth={1} transparent opacity={0.28} />
         ) : null,
       )}
     </group>

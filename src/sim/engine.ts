@@ -191,7 +191,13 @@ export class Engine {
   // ---- robot lifecycle ----------------------------------------------------
 
   private addRobot(): void {
-    const cell = this.spawnCells[this.robots.length];
+    // Pick a spawn cell not currently occupied — robots may be added live (via
+    // the slider) after the fleet has dispersed, so the index-based slot can be
+    // taken. Fall back to the indexed slot if somehow all are occupied.
+    const occ = new Set(this.robots.map((r) => cellKey(r.floor, r.x, r.y)));
+    const cell =
+      this.spawnCells.find((c) => !occ.has(cellKey(c.floor, c.x, c.y))) ??
+      this.spawnCells[this.robots.length];
     if (!cell) return;
     const kind = this.opts.kinds[this.nextRobotId % this.opts.kinds.length];
     const robot: Robot = {
@@ -391,6 +397,7 @@ export class Engine {
           r.phase = 'riding';
           r.dest = null;
           r.yielding = false;
+          r.plannedPath = [];
         },
         onUnload: (robotId, floor) => {
           const r = this.byId.get(robotId)!;
@@ -421,6 +428,7 @@ export class Engine {
           r.elevatorId = null;
           r.targetFloor = null;
           r.dest = null;
+          r.plannedPath = [];
           return true;
         },
       });

@@ -7,7 +7,7 @@
  * under additive blending, so empty space stays clear.
  */
 
-import { useEffect, useMemo, useRef } from 'react';
+import { useLayoutEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useSim } from '@/state/store';
@@ -26,8 +26,10 @@ export function HeatLayer() {
   const ref = useRef<THREE.InstancedMesh>(null);
   const color = useMemo(() => new THREE.Color(), []);
 
-  // Lay out one quad per cell whenever the floor or footprint changes.
-  useEffect(() => {
+  // Lay out one quad per cell whenever the floor or footprint changes. Layout
+  // effect so the instance matrices are set before the next frame paints (the
+  // mesh is recreated when `count` changes, with a zero-filled matrix buffer).
+  useLayoutEffect(() => {
     const mesh = ref.current;
     if (!mesh) return;
     const o = new THREE.Object3D();

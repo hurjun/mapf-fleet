@@ -6,7 +6,7 @@
  * paint a "Comparing…" state first, then compute on the next tick.
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSim } from '@/state/store';
 import { BenchmarkResult, comparePlanners } from '@/sim/benchmark';
 import { Panel } from './ui';
@@ -18,6 +18,12 @@ export function BenchmarkCard() {
   const robotCount = useSim((s) => s.robotCount);
   const [status, setStatus] = useState<'idle' | 'running' | 'done'>('idle');
   const [res, setRes] = useState<BenchmarkResult | null>(null);
+
+  // A prior comparison is meaningless once the building or fleet changes.
+  useEffect(() => {
+    setRes(null);
+    setStatus('idle');
+  }, [params, robotCount]);
 
   const run = () => {
     setStatus('running');
