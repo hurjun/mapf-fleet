@@ -13,7 +13,9 @@ multi-agent path-finding (MAPF) engine.
 
 ![Preview of the simulator](docs/preview.png)
 
-> **Live demo:** _deploy to Vercel and add the URL here_ ·
+> **Run it locally in about a minute** — see [Running locally](#running-locally).
+> It is a zero-config Next.js app, so it can also be one-click deployed to Vercel
+> ([Deployment](#deployment-vercel)). ·
 > **Tip:** drag to orbit the building, then use the sliders to reshape the site
 > and the fleet in real time.
 
@@ -78,6 +80,10 @@ scenarios are produced procedurally by `scenarios.ts`.
 
 ### Path finding (the MAPF core)
 
+> A standalone **[ALGORITHMS.md](ALGORITHMS.md)** walks through the `(x, y, t)`
+> state space, the space-time reservation table, WHCA\*, and CBS in depth — with
+> complexity notes, a reproducible worked example, and references.
+
 Robots navigate with a **prioritized, cooperative** scheme:
 
 1. **Single-agent search** — `spaceTimeAStar` plans in the `(x, y, t)`
@@ -137,6 +143,44 @@ Sweeping the fleet size yields the throughput curve; its knee is the
 term identifies the **bottleneck**. The full derivation is documented inline. As
 the simulation runs, the measured throughput at each fleet size is recorded and
 drawn as points over the predicted curve — model versus reality, side by side.
+
+---
+
+## What's implemented (and what isn't)
+
+A deliberately honest scope, so the engineering claims are easy to verify.
+
+**Genuinely implemented, from scratch:**
+
+- A\* and a **windowed cooperative space-time A\*** (WHCA\*) over `(x, y, t)`.
+- A **space-time reservation table** with order-independent edge keys, which is
+  what provably blocks head-on swaps.
+- A **prioritized planner** whose next-step reservation discipline guarantees no
+  two robots ever land on the same cell.
+- **Conflict-Based Search** (two-level constraint-tree search, vertex *and* edge
+  conflicts, constrained low-level replanning).
+- Capacity-limited **elevators** (LOOK scheduler), **battery/charging** as a real
+  scheduling constraint, and procedural **apartment / factory / warehouse** worlds.
+- An analytical **fleet-size optimizer** validated live against the simulation.
+- A **deterministic, seeded** engine with unit tests asserting the collision-free
+  invariant on every tick.
+
+**Simplifications and non-goals (by design):**
+
+- Robots are **single-cell and uniform-speed** — no heterogeneous footprints or
+  speeds (listed as an extension).
+- CBS runs on a **rolling window with a per-floor node budget** and **falls back
+  to the prioritized planner** when a floor can't be resolved in budget. So its
+  optimality is *per-window, within budget* — it is a real-time planner, not a
+  full offline optimal solver over the whole episode.
+- The prioritized planner alone is **incomplete** (it can deadlock on tightly
+  coupled instances); the engine recovers with a heuristic priority-shuffle, and
+  CBS removes the failure mode. See the worked example in
+  [ALGORITHMS.md](ALGORITHMS.md).
+- Task assignment is **greedy under uniform demand** — no deadlines or priorities.
+- The optimizer's traffic constants (jam density, min speed) are **hand-tuned,
+  not calibrated** from data (auto-calibration is an extension).
+- No **hosted demo** yet; run locally, or one-click deploy to Vercel.
 
 ---
 
@@ -233,6 +277,19 @@ configuration:
 - Auto-calibrating the optimizer's constants from the measured points.
 - Priority/deadline-aware task assignment instead of unlimited uniform demand.
 - Bounded-suboptimal CBS variants (ECBS) for larger fleets.
+
+## References
+
+The planners follow the primary MAPF literature; the full list with complexity
+notes is in [ALGORITHMS.md](ALGORITHMS.md). The key sources:
+
+- D. Silver. *Cooperative Pathfinding.* AIIDE, 2005. — Windowed Hierarchical
+  Cooperative A\* (WHCA\*), the basis of the prioritized planner.
+- G. Sharon, R. Stern, A. Felner, N. R. Sturtevant. *Conflict-Based Search for
+  Optimal Multi-Agent Pathfinding.* Artificial Intelligence 219 (2015), 40–66. —
+  the CBS planner.
+- R. Stern et al. *Multi-Agent Pathfinding: Definitions, Variants, and
+  Benchmarks.* SoCS, 2019. — vertex/edge/swap conflict terminology.
 
 ## Author
 
