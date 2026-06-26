@@ -22,10 +22,45 @@ export function Decor() {
   const D = world.height * CELL;
   const top = floorHeight(world.numFloors - 1);
 
-  return world.scenario === 'apartment' ? (
-    <TowerCrane W={W} D={D} top={top} />
-  ) : (
-    <GantryCrane W={W} D={D} top={top} />
+  return (
+    <group>
+      {world.scenario === 'apartment' ? (
+        <TowerCrane W={W} D={D} top={top} />
+      ) : (
+        <GantryCrane W={W} D={D} top={top} />
+      )}
+      <MaterialYard W={W} D={D} />
+    </group>
+  );
+}
+
+const WOOD = '#9c6b3f';
+const MAT = '#c08a52';
+
+/** Staged material pallets along the front of the site (pure set dressing). */
+function MaterialYard({ W, D }: { W: number; D: number }) {
+  const z = D / 2 + 1.4;
+  const xs = [-W * 0.32, -W * 0.12, W * 0.08, W * 0.28];
+  const heights = [2, 3, 1, 2]; // crates per stack
+  return (
+    <group>
+      {xs.map((x, i) => (
+        <group key={i} position={[x, 0, z]}>
+          {/* Pallet base. */}
+          <mesh position={[0, 0.06, 0]} receiveShadow>
+            <boxGeometry args={[1, 0.12, 0.9]} />
+            <meshStandardMaterial color={WOOD} roughness={0.9} />
+          </mesh>
+          {/* Stacked material crates. */}
+          {Array.from({ length: heights[i] }).map((_, k) => (
+            <mesh key={k} position={[0, 0.32 + k * 0.42, 0]} castShadow>
+              <boxGeometry args={[0.78, 0.4, 0.7]} />
+              <meshStandardMaterial color={MAT} roughness={0.75} />
+            </mesh>
+          ))}
+        </group>
+      ))}
+    </group>
   );
 }
 
