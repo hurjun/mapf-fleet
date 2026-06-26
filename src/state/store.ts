@@ -77,6 +77,8 @@ interface SimState {
   helpOpen: boolean;
   /** Whether the control/stat panels are hidden (for clean 3D captures). */
   uiHidden: boolean;
+  /** Whether the camera slowly auto-rotates (nice for demos/recordings). */
+  autoRotate: boolean;
 
   world: World;
   snapshot: Snapshot;
@@ -112,6 +114,7 @@ interface SimState {
   setFollowSelected: (v: boolean) => void;
   setHelpOpen: (v: boolean) => void;
   setUiHidden: (v: boolean) => void;
+  setAutoRotate: (v: boolean) => void;
   togglePlay: () => void;
   /** Advance the simulation by a single tick (useful while paused). */
   stepOnce: () => void;
@@ -185,6 +188,7 @@ export const useSim = create<SimState>((set, get) => ({
   followSelected: false,
   helpOpen: false,
   uiHidden: false,
+  autoRotate: false,
   world: initialWorld,
   snapshot: initialSnapshot,
   optimizer: initialOptimizer,
@@ -282,6 +286,7 @@ export const useSim = create<SimState>((set, get) => ({
   setFollowSelected: (v) => set({ followSelected: v }),
   setHelpOpen: (v) => set({ helpOpen: v }),
   setUiHidden: (v) => set({ uiHidden: v }),
+  setAutoRotate: (v) => set({ autoRotate: v }),
   togglePlay: () => set((s) => ({ running: !s.running })),
   stepOnce: () => get().tick(),
   applyRecommended: () => get().setRobotCount(get().optimizer.recommended),

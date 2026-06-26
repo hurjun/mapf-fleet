@@ -100,6 +100,7 @@ function CameraRig({ world }: { world: World }) {
   const nonce = useSim((s) => s.cameraNonce);
   const focusFloor = useSim((s) => s.focusFloor);
   const viewFloor = useSim((s) => s.viewFloor);
+  const autoRotate = useSim((s) => s.autoRotate);
 
   useEffect(() => {
     const span = Math.max(world.width, world.height);
@@ -158,6 +159,8 @@ function CameraRig({ world }: { world: World }) {
       ref={controls}
       enableDamping
       dampingFactor={0.08}
+      autoRotate={autoRotate}
+      autoRotateSpeed={0.4}
       maxPolarAngle={Math.PI * 0.49}
       minDistance={6}
       maxDistance={span * 5}

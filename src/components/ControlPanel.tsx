@@ -39,6 +39,7 @@ export function ControlPanel() {
   const focusFloor = useSim((s) => s.focusFloor);
   const bloom = useSim((s) => s.bloom);
   const followSelected = useSim((s) => s.followSelected);
+  const autoRotate = useSim((s) => s.autoRotate);
 
   const setScenario = useSim((s) => s.setScenario);
   const setParam = useSim((s) => s.setParam);
@@ -52,6 +53,7 @@ export function ControlPanel() {
   const setFocusFloor = useSim((s) => s.setFocusFloor);
   const setBloom = useSim((s) => s.setBloom);
   const setFollowSelected = useSim((s) => s.setFollowSelected);
+  const setAutoRotate = useSim((s) => s.setAutoRotate);
   const togglePlay = useSim((s) => s.togglePlay);
   const stepOnce = useSim((s) => s.stepOnce);
   const reset = useSim((s) => s.reset);
@@ -131,6 +133,7 @@ export function ControlPanel() {
           <div className="mb-1.5 text-xs text-white/70">Camera</div>
           <Segmented options={VIEWS} value={cameraPreset} onChange={setCameraPreset} />
         </div>
+        <Toggle label="Auto-rotate camera" value={autoRotate} onChange={setAutoRotate} />
         <Toggle label="Focus map floor" value={focusFloor} onChange={setFocusFloor} />
         <Toggle label="Follow selected robot" value={followSelected} onChange={setFollowSelected} />
         <Toggle label="Glow (bloom)" value={bloom} onChange={setBloom} />
