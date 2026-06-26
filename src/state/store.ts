@@ -65,6 +65,8 @@ interface SimState {
   /** Requested camera framing, with a nonce so re-selecting re-applies it. */
   cameraPreset: CameraPreset;
   cameraNonce: number;
+  /** Whether bloom post-processing is enabled. */
+  bloom: boolean;
 
   world: World;
   snapshot: Snapshot;
@@ -92,6 +94,7 @@ interface SimState {
   setViewFloor: (f: number) => void;
   setFocusFloor: (v: boolean) => void;
   setCameraPreset: (p: CameraPreset) => void;
+  setBloom: (v: boolean) => void;
   togglePlay: () => void;
   applyRecommended: () => void;
   reset: () => void;
@@ -155,6 +158,7 @@ export const useSim = create<SimState>((set, get) => ({
   focusFloor: false,
   cameraPreset: 'iso',
   cameraNonce: 0,
+  bloom: true,
   world: initialWorld,
   snapshot: initialSnapshot,
   optimizer: initialOptimizer,
@@ -241,6 +245,7 @@ export const useSim = create<SimState>((set, get) => ({
   },
   setFocusFloor: (v) => set({ focusFloor: v }),
   setCameraPreset: (p) => set((s) => ({ cameraPreset: p, cameraNonce: s.cameraNonce + 1 })),
+  setBloom: (v) => set({ bloom: v }),
   togglePlay: () => set((s) => ({ running: !s.running })),
   applyRecommended: () => get().setRobotCount(get().optimizer.recommended),
 

@@ -9,6 +9,7 @@
 import { useEffect, useRef } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
+import { Bloom, EffectComposer } from '@react-three/postprocessing';
 import { useSim } from '@/state/store';
 import { World } from '@/sim/types';
 import { Building } from './Building';
@@ -20,6 +21,7 @@ import { FLOOR_GAP } from './constants';
 
 export default function Scene() {
   const world = useSim((s) => s.world);
+  const bloom = useSim((s) => s.bloom);
   const span = Math.max(world.width, world.height);
   const top = (world.numFloors - 1) * FLOOR_GAP;
 
@@ -57,6 +59,18 @@ export default function Scene() {
       <SelectedPath />
 
       <CameraRig world={world} />
+
+      {bloom && (
+        <EffectComposer>
+          <Bloom
+            mipmapBlur
+            intensity={0.7}
+            luminanceThreshold={0.25}
+            luminanceSmoothing={0.2}
+            radius={0.6}
+          />
+        </EffectComposer>
+      )}
     </Canvas>
   );
 }
