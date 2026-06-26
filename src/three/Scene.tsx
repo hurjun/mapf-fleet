@@ -33,7 +33,7 @@ export default function Scene() {
       shadows
       dpr={[1, 2]}
       gl={{ antialias: true }}
-      camera={{ position: [span * 0.72, top + span * 0.42, span * 0.72], fov: 42 }}
+      camera={{ position: [span * 0.85, top * 0.55 + span * 0.5, span * 0.85], fov: 42 }}
       onPointerMissed={() => useSim.getState().setSelected(null)}
     >
       <color attach="background" args={['#0a0c12']} />
@@ -111,8 +111,9 @@ function CameraRig({ world }: { world: World }) {
       pos = [0, top * 0.55, span * 1.35];
       target = [0, top * 0.4, 0];
     } else {
-      pos = [span * 0.72, top + span * 0.42, span * 0.72];
-      target = [0, top * 0.4, 0];
+      // Side-on isometric so a tall floor stack separates clearly.
+      pos = [span * 0.85, top * 0.55 + span * 0.5, span * 0.85];
+      target = [0, top * 0.42, 0];
     }
 
     camera.position.set(...pos);

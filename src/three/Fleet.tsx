@@ -151,11 +151,12 @@ const RobotMesh = memo(function RobotMesh({ id, kind }: { id: number; kind: Robo
         <ringGeometry args={[0.55, 0.72, 28]} />
         <meshBasicMaterial color="#5eead4" transparent opacity={0.85} side={THREE.DoubleSide} />
       </mesh>
-      <group scale={1.35}>
+      <group scale={1.6}>
         <RobotBody kind={kind} accent={accent} />
-        <mesh ref={crate} position={[0, 0.66, 0]} visible={false} castShadow>
-          <boxGeometry args={[0.32, 0.28, 0.32]} />
-          <meshStandardMaterial color={CRATE} roughness={0.85} />
+        {/* Carried material: a chunky, lit crate so "carrying" is unmistakable. */}
+        <mesh ref={crate} position={[0, 0.72, 0]} visible={false} castShadow>
+          <boxGeometry args={[0.46, 0.4, 0.46]} />
+          <meshStandardMaterial color={CRATE} emissive={CRATE} emissiveIntensity={0.25} roughness={0.7} />
         </mesh>
         {/* Battery indicator floating above the robot. */}
         <mesh position={[0, 0.92, 0]}>

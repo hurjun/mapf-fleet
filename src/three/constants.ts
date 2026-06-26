@@ -11,7 +11,7 @@ import { RobotSnapshot } from '@/sim/types';
 /** Size of one grid cell in 3D world units. */
 export const CELL = 1;
 /** Vertical distance between successive floor planes. */
-export const FLOOR_GAP = 3.2;
+export const FLOOR_GAP = 3.6;
 /** Small lift so robot wheels sit just above the floor slab surface. */
 export const ROBOT_Y = 0.1;
 
@@ -33,9 +33,10 @@ export function floorHeight(floor: number): number {
 
 /** Palette for the building structure. */
 export const COLORS = {
-  slab: '#1b2435',
-  slabEdge: '#3a4a66',
-  column: '#313e56',
+  slab: '#27324a',
+  slabEdge: '#6b86b8',
+  beam: '#7d93b8',
+  column: '#4a5a76',
   machine: '#3b485f',
   shaft: '#7dd3fc',
   car: '#e2e8f0',
