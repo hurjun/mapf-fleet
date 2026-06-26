@@ -61,10 +61,10 @@ export function ControlPanel() {
   const B = PARAM_BOUNDS;
 
   return (
-    <Panel title="Site configuration">
-      <div className="space-y-3">
+    <Panel title="Controls">
+      <div className="space-y-2.5">
+        <Group>Site</Group>
         <Segmented options={SCENARIOS} value={scenario} onChange={setScenario} />
-
         <Slider
           label="Floors"
           value={params.numFloors}
@@ -104,8 +104,7 @@ export function ControlPanel() {
           onChange={(v) => setParam('height', v)}
         />
 
-        <div className="h-px bg-white/10" />
-
+        <Group>Fleet &amp; run</Group>
         <Slider
           label="Robots"
           value={robotCount}
@@ -115,7 +114,6 @@ export function ControlPanel() {
           hint="Adjust live — robots are added or removed without restarting the run."
         />
         <Slider label="Speed" value={speed} min={1} max={20} unit="×" onChange={setSpeed} />
-
         <div>
           <div className="mb-1.5 text-xs text-white/70">Planner</div>
           <Segmented options={PLANNERS} value={planner} onChange={setPlanner} />
@@ -124,20 +122,6 @@ export function ControlPanel() {
             (heavier, falls back when a floor is too tangled).
           </p>
         </div>
-
-        <Toggle label="Show all planned paths" value={showPaths} onChange={setShowPaths} />
-        <Toggle label="Congestion heatmap" value={showHeat} onChange={setShowHeat} />
-        <Toggle label="Motion trails" value={showTrails} onChange={setShowTrails} />
-
-        <div>
-          <div className="mb-1.5 text-xs text-white/70">Camera</div>
-          <Segmented options={VIEWS} value={cameraPreset} onChange={setCameraPreset} />
-        </div>
-        <Toggle label="Auto-rotate camera" value={autoRotate} onChange={setAutoRotate} />
-        <Toggle label="Focus map floor" value={focusFloor} onChange={setFocusFloor} />
-        <Toggle label="Follow selected robot" value={followSelected} onChange={setFollowSelected} />
-        <Toggle label="Glow (bloom)" value={bloom} onChange={setBloom} />
-
         <div className="flex gap-2 pt-0.5">
           <Button variant="primary" onClick={togglePlay} className="flex-1">
             {running ? 'Pause' : 'Play'}
@@ -150,11 +134,31 @@ export function ControlPanel() {
           </Button>
         </div>
 
-        <p className="pt-0.5 text-[10px] leading-relaxed text-white/30">
+        <Group>Overlays</Group>
+        <Toggle label="Show all planned paths" value={showPaths} onChange={setShowPaths} />
+        <Toggle label="Congestion heatmap" value={showHeat} onChange={setShowHeat} />
+        <Toggle label="Motion trails" value={showTrails} onChange={setShowTrails} />
+
+        <Group>View</Group>
+        <Segmented options={VIEWS} value={cameraPreset} onChange={setCameraPreset} />
+        <Toggle label="Auto-rotate camera" value={autoRotate} onChange={setAutoRotate} />
+        <Toggle label="Focus map floor" value={focusFloor} onChange={setFocusFloor} />
+        <Toggle label="Follow selected robot" value={followSelected} onChange={setFollowSelected} />
+        <Toggle label="Glow (bloom)" value={bloom} onChange={setBloom} />
+
+        <p className="pt-1 text-[10px] leading-relaxed text-white/30">
           Keys: Space play · S step · P paths · F focus · 1/2/3 view · ↑/↓ floor ·
           [ / ] speed · U panels · Esc deselect
         </p>
       </div>
     </Panel>
+  );
+}
+
+function Group({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="pt-1.5 text-[10px] font-semibold uppercase tracking-wider text-accent/70">
+      {children}
+    </div>
   );
 }
