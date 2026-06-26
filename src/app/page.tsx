@@ -6,6 +6,7 @@ import { useSim } from '@/state/store';
 import { useSimLoop } from '@/state/useSimLoop';
 import { useKeyboard } from '@/state/useKeyboard';
 import { useUrlSync } from '@/state/useUrlSync';
+import { useMediaQuery } from '@/state/useMediaQuery';
 import { Header } from '@/components/Header';
 import { ControlPanel } from '@/components/ControlPanel';
 import { StatsPanel } from '@/components/StatsPanel';
@@ -42,6 +43,7 @@ export default function Page() {
 
   const uiHidden = useSim((s) => s.uiHidden);
   const setUiHidden = useSim((s) => s.setUiHidden);
+  const isDesktop = useMediaQuery('(min-width: 768px)');
   const [mobileTab, setMobileTab] = useState<MobileTab>('controls');
 
   // Respect the OS "reduce motion" preference by turning off the bloom glow.
@@ -56,11 +58,13 @@ export default function Page() {
       <Scene />
 
       {/* Compact app title (mobile only). */}
-      <div className="pointer-events-none absolute left-3 top-3 z-30 md:hidden">
-        <span className="rounded-md bg-panel px-2 py-1 text-xs font-semibold text-white/85 backdrop-blur-md">
-          MAPF Fleet
-        </span>
-      </div>
+      {!isDesktop && (
+        <div className="pointer-events-none absolute left-3 top-3 z-30">
+          <span className="rounded-md bg-panel px-2 py-1 text-xs font-semibold text-white/85 backdrop-blur-md">
+            MAPF Fleet
+          </span>
+        </div>
+      )}
 
       {/* Hide/show panels — useful for clean, unobstructed 3D captures. */}
       <button
@@ -71,13 +75,13 @@ export default function Page() {
         {uiHidden ? 'Show panels' : 'Hide panels'}
       </button>
 
-      {!uiHidden && (
-        <>
-          {/* Desktop: two floating columns. The container ignores pointer
-              events; each panel re-enables them so the canvas stays draggable. */}
-          <div className="pointer-events-none absolute inset-0 hidden items-start justify-between gap-3 p-4 md:flex">
+      {!uiHidden &&
+        (isDesktop ? (
+          // Desktop: two floating columns. The container ignores pointer events;
+          // each panel re-enables them so the canvas stays draggable.
+          <div className="pointer-events-none absolute inset-0 flex items-start justify-between gap-3 p-4">
             <div
-              className="flex w-72 max-w-[44vw] flex-col gap-3 overflow-y-auto pr-1"
+              className="flex w-72 flex-col gap-3 overflow-y-auto pr-1"
               style={{ maxHeight: 'calc(100vh - 2rem)' }}
             >
               <Header />
@@ -85,9 +89,8 @@ export default function Page() {
               <Minimap />
               <Legend />
             </div>
-
             <div
-              className="flex w-72 max-w-[44vw] flex-col gap-3 overflow-y-auto pl-1"
+              className="flex w-72 flex-col gap-3 overflow-y-auto pl-1"
               style={{ maxHeight: 'calc(100vh - 2rem)' }}
             >
               <RobotInspector />
@@ -97,9 +100,9 @@ export default function Page() {
               <BenchmarkCard />
             </div>
           </div>
-
-          {/* Mobile: a bottom sheet with Controls / Stats tabs. */}
-          <div className="absolute inset-x-0 bottom-0 z-30 md:hidden">
+        ) : (
+          // Mobile: a bottom sheet with Controls / Stats tabs.
+          <div className="absolute inset-x-0 bottom-0 z-30">
             <div className="mx-2 mb-2 overflow-hidden rounded-2xl border border-white/10 bg-panel shadow-2xl backdrop-blur-md">
               <div className="border-b border-white/10 p-2">
                 <Segmented options={MOBILE_TABS} value={mobileTab} onChange={setMobileTab} />
@@ -123,8 +126,7 @@ export default function Page() {
               </div>
             </div>
           </div>
-        </>
-      )}
+        ))}
 
       <HelpOverlay />
     </main>

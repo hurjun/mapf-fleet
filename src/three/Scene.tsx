@@ -102,6 +102,10 @@ function CameraRig({ world }: { world: World }) {
   const viewFloor = useSim((s) => s.viewFloor);
   const autoRotate = useSim((s) => s.autoRotate);
 
+  // Only the focused floor affects framing; in free-orbit mode, changing the
+  // minimap floor must NOT reset the camera (focusKey stays -1 then).
+  const focusKey = focusFloor ? viewFloor : -1;
+
   useEffect(() => {
     const span = Math.max(world.width, world.height);
     const top = (world.numFloors - 1) * FLOOR_GAP;
@@ -110,7 +114,7 @@ function CameraRig({ world }: { world: World }) {
     let target: [number, number, number];
 
     if (focusFloor) {
-      const fy = viewFloor * FLOOR_GAP;
+      const fy = focusKey * FLOOR_GAP; // focusKey === viewFloor when focusing
       pos = [span * 0.5, fy + span * 0.6, span * 0.5];
       target = [0, fy, 0];
     } else if (preset === 'top') {
@@ -133,7 +137,7 @@ function CameraRig({ world }: { world: World }) {
       controls.current.target.set(...target);
       controls.current.update();
     }
-  }, [world, camera, preset, nonce, focusFloor, viewFloor]);
+  }, [world, camera, preset, nonce, focusFloor, focusKey]);
 
   // Smoothly follow the selected robot: shift the orbit target (and camera by
   // the same delta, preserving the user's angle/zoom) toward the robot each frame.

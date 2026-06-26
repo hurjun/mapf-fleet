@@ -69,6 +69,10 @@ const RobotMesh = memo(function RobotMesh({ id, kind }: { id: number; kind: Robo
     [],
   );
   useEffect(() => () => accent.dispose(), [accent]);
+  // Reset the cursor if this robot unmounts while hovered (e.g. fleet shrinks).
+  useEffect(() => () => {
+    document.body.style.cursor = 'auto';
+  }, []);
 
   const target = useRef(new THREE.Vector3());
   const tmpColor = useRef(new THREE.Color('#4ade80'));
