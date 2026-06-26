@@ -49,6 +49,12 @@ interface SimState {
   optimizer: OptimizeResult;
   /** Fleet composition; changes only when robots are added/removed. */
   roster: RosterEntry[];
+  /**
+   * Measured throughput observed at each fleet size this session (deliveries
+   * per minute, smoothed). Plotted against the optimizer's prediction so users
+   * can compare the model to reality. Reset whenever the building changes.
+   */
+  measured: Record<number, number>;
 
   // Actions.
   tick: () => void;
@@ -66,6 +72,9 @@ interface SimState {
 // during module initialization (the `!` asserts this definite assignment).
 let engine!: Engine;
 
+// Smoothed measured throughput per fleet size; reset when the building changes.
+let measuredThroughput: Record<number, number> = {};
+
 function makeOptimizer(params: ScenarioParams): OptimizeResult {
   return optimizeFleet({
     params,
@@ -77,6 +86,7 @@ function makeOptimizer(params: ScenarioParams): OptimizeResult {
 }
 
 function spawnEngine(params: ScenarioParams, robotCount: number, planner: PlannerKind): World {
+  measuredThroughput = {}; // a new building invalidates past measurements
   const world = buildWorld(params);
   engine = new Engine(world, {
     robotCount,
@@ -110,10 +120,22 @@ export const useSim = create<SimState>((set, get) => ({
   snapshot: initialSnapshot,
   optimizer: initialOptimizer,
   roster: rosterFrom(initialSnapshot),
+  measured: {},
 
   tick: () => {
     engine.step();
-    set({ snapshot: engine.snapshot() });
+    const snapshot = engine.snapshot();
+    // Record measured throughput for the current fleet size once the trailing
+    // throughput window has filled, smoothing it so the overlay is stable.
+    if (snapshot.tick > 120) {
+      const rc = engine.robotCount;
+      const prev = measuredThroughput[rc] ?? snapshot.metrics.throughput;
+      measuredThroughput = {
+        ...measuredThroughput,
+        [rc]: prev * 0.97 + snapshot.metrics.throughput * 0.03,
+      };
+    }
+    set({ snapshot, measured: measuredThroughput });
   },
 
   setScenario: (id) => {

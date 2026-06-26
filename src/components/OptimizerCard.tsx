@@ -20,6 +20,7 @@ const BOTTLENECK_LABEL: Record<Bottleneck, string> = {
 export function OptimizerCard() {
   const optimizer = useSim((s) => s.optimizer);
   const robotCount = useSim((s) => s.robotCount);
+  const measured = useSim((s) => s.measured);
   const applyRecommended = useSim((s) => s.applyRecommended);
 
   return (
@@ -37,9 +38,24 @@ export function OptimizerCard() {
         </Button>
       </div>
 
-      <Curve curve={optimizer.curve} recommended={optimizer.recommended} current={robotCount} />
+      <Curve
+        curve={optimizer.curve}
+        recommended={optimizer.recommended}
+        current={robotCount}
+        measured={measured}
+      />
 
-      <p className="mt-2 text-[11px] leading-snug text-white/55">
+      <div className="mt-1.5 flex items-center gap-3 text-[10px] text-white/45">
+        <span className="flex items-center gap-1">
+          <span className="inline-block h-0.5 w-3" style={{ backgroundColor: '#5eead4' }} /> model
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="inline-block h-1.5 w-1.5 rounded-full" style={{ backgroundColor: '#fb7185' }} />{' '}
+          measured
+        </span>
+      </div>
+
+      <p className="mt-1.5 text-[11px] leading-snug text-white/55">
         Peak ≈ <span className="font-mono text-white/80">{optimizer.maxThroughput.toFixed(0)}</span>{' '}
         deliveries/min, limited by{' '}
         <span className="text-accent">{BOTTLENECK_LABEL[optimizer.bottleneck]}</span>. Beyond the
@@ -53,16 +69,24 @@ function Curve({
   curve,
   recommended,
   current,
+  measured,
 }: {
   curve: ThroughputPoint[];
   recommended: number;
   current: number;
+  measured: Record<number, number>;
 }) {
   const w = 280;
   const h = 64;
   const pad = 5;
   const n = curve.length;
-  const max = Math.max(1, ...curve.map((p) => p.throughput));
+
+  const measuredPoints = Object.entries(measured).map(([k, v]) => ({ robots: Number(k), value: v }));
+  const max = Math.max(
+    1,
+    ...curve.map((p) => p.throughput),
+    ...measuredPoints.map((p) => p.value),
+  );
 
   const xFor = (i: number) => pad + (i / Math.max(1, n - 1)) * (w - 2 * pad);
   const yFor = (v: number) => h - pad - (v / max) * (h - 2 * pad);
@@ -88,6 +112,17 @@ function Curve({
         strokeOpacity={0.45}
         strokeDasharray="3 3"
       />
+      {/* Measured points observed this session. */}
+      {measuredPoints.map((p) => (
+        <circle
+          key={p.robots}
+          cx={xFor(p.robots - 1)}
+          cy={yFor(p.value)}
+          r={2.2}
+          fill="#fb7185"
+          fillOpacity={0.9}
+        />
+      ))}
       <circle cx={curX} cy={curY} r={3.2} fill="#fbbf24" stroke="#0a0c12" strokeWidth={1} />
     </svg>
   );
