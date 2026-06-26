@@ -53,6 +53,11 @@ export type PlannerKind = 'prioritized' | 'cbs';
 
 const DEFAULT_KINDS: RobotKind[] = ['forklift', 'cart', 'lifter', 'scout'];
 
+/** If the whole fleet makes no progress for this many ticks, recover. */
+const STALL_THRESHOLD = 14;
+/** Ticks of randomized-priority planning used to break a detected deadlock. */
+const RECOVERY_DURATION = 8;
+
 /**
  * Battery model. Drain is per active tick (higher while carrying); a robot
  * diverts to a charger once it drops below `low`, and recharges at `charge`/tick.
@@ -104,6 +109,12 @@ export class Engine {
   private totalDeliveries = 0;
   private deliveryTicks: number[] = [];
   private throughput = 0;
+
+  // Deadlock detection / recovery state.
+  private stallTicks = 0;
+  private recoveryTicks = 0;
+  private recoverySalt = 0;
+  private totalDeadlocks = 0;
 
   constructor(world: World, opts: EngineOptions) {
     this.world = world;
@@ -430,11 +441,20 @@ export class Engine {
       }
     }
 
-    const plan = this.plannerKind === 'cbs' ? planMovesCBS : planMoves;
-    plan(this.world, navigating, statics, this.cache, this.opts.planWindow);
+    // During recovery, force shuffled-priority prioritized planning to break the
+    // deadlock; otherwise use the selected planner.
+    if (this.recoveryTicks > 0) {
+      planMoves(this.world, navigating, statics, this.cache, this.opts.planWindow, this.recoverySalt);
+      this.recoveryTicks--;
+    } else {
+      const plan = this.plannerKind === 'cbs' ? planMovesCBS : planMoves;
+      plan(this.world, navigating, statics, this.cache, this.opts.planWindow);
+    }
 
+    let moved = 0;
     for (const r of navigating) {
       if (r.nextX !== r.x || r.nextY !== r.y) {
+        moved++;
         r.moveTicks++;
         r.x = r.nextX;
         r.y = r.nextY;
@@ -444,6 +464,17 @@ export class Engine {
     }
     for (const r of this.robots) {
       if (r.phase === 'awaiting_elevator') r.waitTicks++;
+    }
+
+    // Deadlock detection: navigating robots present but nobody moved.
+    if (navigating.length > 0 && moved === 0) this.stallTicks++;
+    else this.stallTicks = 0;
+
+    if (this.stallTicks >= STALL_THRESHOLD && this.recoveryTicks === 0) {
+      this.recoveryTicks = RECOVERY_DURATION;
+      this.recoverySalt++;
+      this.totalDeadlocks++;
+      this.stallTicks = 0;
     }
   }
 
@@ -547,6 +578,7 @@ export class Engine {
       elevatorUtilization,
       avgWaitPerDelivery: totalWait / Math.max(1, this.totalDeliveries),
       avgBattery: totalBattery / n,
+      deadlocksResolved: this.totalDeadlocks,
     };
   }
 

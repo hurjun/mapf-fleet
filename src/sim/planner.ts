@@ -46,6 +46,12 @@ export function planMoves(
   statics: StaticObstacle[],
   cache: DistanceFieldCache,
   window: number,
+  /**
+   * When set, robots are planned in a pseudo-random order keyed by this salt
+   * instead of by priority. The engine uses this to break symmetric deadlocks:
+   * reordering who plans first lets a stuck cluster resolve.
+   */
+  shuffleSalt?: number,
 ): void {
   const reservation = new ReservationTable();
 
@@ -54,14 +60,20 @@ export function planMoves(
     reservation.reserveStatic(s.floor, s.x, s.y, 1, window);
   }
 
-  // Priority: loaded robots first (don't make a full robot detour), then the
-  // robot that has waited longest (breaks symmetric stand-offs over time),
-  // then by id for determinism.
-  const order = [...navigating].sort((a, b) => {
-    if (a.carrying !== b.carrying) return a.carrying ? -1 : 1;
-    if (a.waitTicks !== b.waitTicks) return b.waitTicks - a.waitTicks;
-    return a.id - b.id;
-  });
+  const order = [...navigating];
+  if (shuffleSalt !== undefined) {
+    const hash = (n: number) => Math.imul((n ^ shuffleSalt) >>> 0, 2654435761) >>> 0;
+    order.sort((a, b) => hash(a.id) - hash(b.id));
+  } else {
+    // Priority: loaded robots first (don't make a full robot detour), then the
+    // robot that has waited longest (breaks symmetric stand-offs over time),
+    // then by id for determinism.
+    order.sort((a, b) => {
+      if (a.carrying !== b.carrying) return a.carrying ? -1 : 1;
+      if (a.waitTicks !== b.waitTicks) return b.waitTicks - a.waitTicks;
+      return a.id - b.id;
+    });
+  }
 
   for (let i = 0; i < order.length; i++) {
     const robot = order[i];

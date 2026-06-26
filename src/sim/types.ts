@@ -211,4 +211,6 @@ export interface Metrics {
   avgWaitPerDelivery: number;
   /** Mean battery charge across the fleet (0..1). */
   avgBattery: number;
+  /** Number of detected deadlocks the engine has recovered from. */
+  deadlocksResolved: number;
 }
