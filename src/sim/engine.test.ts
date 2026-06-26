@@ -4,7 +4,7 @@ import { buildWorld, DEFAULT_PARAMS } from './scenarios';
 import { Cell } from './types';
 
 /** Run a scenario and assert the core MAPF safety invariants hold every tick. */
-function runAndCheck(scenario: 'apartment' | 'factory', robots: number, ticks: number) {
+function runAndCheck(scenario: 'apartment' | 'factory' | 'warehouse', robots: number, ticks: number) {
   const world = buildWorld(DEFAULT_PARAMS[scenario]);
   const engine = new Engine(world, { robotCount: robots, seed: 7 });
 
@@ -47,6 +47,11 @@ describe('Engine (full simulation)', () => {
 
   it('keeps the factory fleet collision-free and completes deliveries', () => {
     const deliveries = runAndCheck('factory', 12, 1400);
+    expect(deliveries).toBeGreaterThan(0);
+  });
+
+  it('keeps the warehouse fleet collision-free and completes deliveries', () => {
+    const deliveries = runAndCheck('warehouse', 14, 1400);
     expect(deliveries).toBeGreaterThan(0);
   });
 

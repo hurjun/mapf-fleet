@@ -74,7 +74,7 @@ export interface Elevator {
   doorTicks: number;
 }
 
-export type ScenarioId = 'apartment' | 'factory';
+export type ScenarioId = 'apartment' | 'factory' | 'warehouse';
 
 /** A fully built, immutable world the engine simulates against. */
 export interface World {

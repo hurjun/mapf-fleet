@@ -45,6 +45,16 @@ export const DEFAULT_PARAMS: Record<ScenarioId, ScenarioParams> = {
     travelTicksPerFloor: 3,
     doorTicks: 3,
   },
+  warehouse: {
+    scenario: 'warehouse',
+    numFloors: 2,
+    width: 36,
+    height: 26,
+    elevatorCount: 2,
+    elevatorCapacity: 3,
+    travelTicksPerFloor: 3,
+    doorTicks: 3,
+  },
 };
 
 /** Allowed ranges for the live controls. */
@@ -65,10 +75,16 @@ export function buildWorld(p: ScenarioParams): World {
   }
 
   if (p.scenario === 'apartment') addColumns(floors, 6, 5);
-  else addMachineBlocks(floors, 8, 6);
+  else if (p.scenario === 'factory') addMachineBlocks(floors, 8, 6);
+  else addRacks(floors);
 
   const elevators = addElevators(floors, p);
-  const base = p.scenario === 'apartment' ? apartmentStations(floors) : factoryStations(floors);
+  const base =
+    p.scenario === 'apartment'
+      ? apartmentStations(floors)
+      : p.scenario === 'factory'
+        ? factoryStations(floors)
+        : warehouseStations(floors);
   const stations = base.concat(addChargers(floors, base.length));
 
   // Make sure every station sits on a clear, walkable cell.
@@ -97,6 +113,21 @@ function addMachineBlocks(floors: FloorGrid[], stepX: number, stepY: number): vo
       for (let x = 3; x < g.width - 3; x += stepX) {
         g.cells[idx(x, y, g.width)] = Cell.Wall;
         g.cells[idx(x + 1, y, g.width)] = Cell.Wall;
+      }
+    }
+  }
+}
+
+/**
+ * Long storage-rack rows for the warehouse, leaving travel aisles between rows
+ * and periodic cross-aisle gaps so the floor stays fully connected.
+ */
+function addRacks(floors: FloorGrid[]): void {
+  for (const g of floors) {
+    for (let y = 4; y < g.height - 4; y += 3) {
+      for (let x = 3; x < g.width - 3; x++) {
+        if (x % 8 === 0) continue; // cross-aisle gap
+        g.cells[idx(x, y, g.width)] = Cell.Wall;
       }
     }
   }
@@ -178,6 +209,27 @@ function factoryStations(floors: FloorGrid[]): Station[] {
     for (const c of lattice(g, 4, g.width - 4, 3, y1, 6, 4)) {
       stations.push({ id: id++, role: 'dropoff', label: 'assembly-station', ...c, floor: f });
     }
+  }
+  return stations;
+}
+
+function warehouseStations(floors: FloorGrid[]): Station[] {
+  const stations: Station[] = [];
+  let id = 0;
+
+  // Storage pick faces in the aisle just below each rack row, on every floor.
+  for (const g of floors) {
+    for (let y = 5; y < g.height - 4; y += 3) {
+      for (let x = 4; x < g.width - 4; x += 5) {
+        stations.push({ id: id++, role: 'pickup', label: 'storage', x, y, floor: g.floor });
+      }
+    }
+  }
+
+  // Packing / shipping docks along the front of the ground floor.
+  const ground = floors[0];
+  for (const c of lattice(ground, 4, ground.width - 4, ground.height - 3, ground.height - 2, 3, 1)) {
+    stations.push({ id: id++, role: 'dropoff', label: 'packing', ...c, floor: 0 });
   }
   return stations;
 }

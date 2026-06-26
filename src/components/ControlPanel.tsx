@@ -11,6 +11,7 @@ import { Button, Panel, Segmented, Slider, Toggle } from './ui';
 const SCENARIOS: Array<{ value: ScenarioId; label: string }> = [
   { value: 'apartment', label: 'Apartment' },
   { value: 'factory', label: 'Factory' },
+  { value: 'warehouse', label: 'Warehouse' },
 ];
 
 const PLANNERS: Array<{ value: PlannerKind; label: string }> = [
