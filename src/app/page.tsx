@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { useSim } from '@/state/store';
 import { useSimLoop } from '@/state/useSimLoop';
@@ -33,6 +34,13 @@ export default function Page() {
 
   const uiHidden = useSim((s) => s.uiHidden);
   const setUiHidden = useSim((s) => s.setUiHidden);
+
+  // Respect the OS "reduce motion" preference by turning off the bloom glow.
+  useEffect(() => {
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+      useSim.getState().setBloom(false);
+    }
+  }, []);
 
   return (
     <main className="relative h-full w-full overflow-hidden">

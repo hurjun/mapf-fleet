@@ -65,3 +65,13 @@ input[type='range']::-moz-range-thumb {
   cursor: pointer;
   border: 2px solid #0a0c12;
 }
+
+/* Honor the OS "reduce motion" preference for UI transitions. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
