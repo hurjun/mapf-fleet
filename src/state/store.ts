@@ -11,7 +11,7 @@
  */
 
 import { create } from 'zustand';
-import { Engine, Snapshot } from '@/sim/engine';
+import { Engine, PlannerKind, Snapshot } from '@/sim/engine';
 import { optimizeFleet, OptimizeResult } from '@/sim/optimize';
 import { buildWorld, DEFAULT_PARAMS, PARAM_BOUNDS, ScenarioParams } from '@/sim/scenarios';
 import { RobotKind, ScenarioId, World } from '@/sim/types';
@@ -41,6 +41,9 @@ interface SimState {
   speed: number;
   running: boolean;
 
+  /** Active multi-agent planner. */
+  planner: PlannerKind;
+
   world: World;
   snapshot: Snapshot;
   optimizer: OptimizeResult;
@@ -53,6 +56,7 @@ interface SimState {
   setParam: (key: NumericParamKey, value: number) => void;
   setRobotCount: (n: number) => void;
   setSpeed: (n: number) => void;
+  setPlanner: (kind: PlannerKind) => void;
   togglePlay: () => void;
   applyRecommended: () => void;
   reset: () => void;
@@ -72,7 +76,7 @@ function makeOptimizer(params: ScenarioParams): OptimizeResult {
   });
 }
 
-function spawnEngine(params: ScenarioParams, robotCount: number): World {
+function spawnEngine(params: ScenarioParams, robotCount: number, planner: PlannerKind): World {
   const world = buildWorld(params);
   engine = new Engine(world, {
     robotCount,
@@ -80,6 +84,7 @@ function spawnEngine(params: ScenarioParams, robotCount: number): World {
     loadTicks: SIM.loadTicks,
     unloadTicks: SIM.unloadTicks,
     tickSeconds: SIM.tickSeconds,
+    planner,
   });
   return world;
 }
@@ -91,7 +96,7 @@ function rosterFrom(snapshot: Snapshot): RosterEntry[] {
 // Initial world: the apartment high-rise at its recommended fleet size.
 const initialParams = DEFAULT_PARAMS.apartment;
 const initialOptimizer = makeOptimizer(initialParams);
-const initialWorld = spawnEngine(initialParams, initialOptimizer.recommended);
+const initialWorld = spawnEngine(initialParams, initialOptimizer.recommended, 'prioritized');
 const initialSnapshot = engine.snapshot();
 
 export const useSim = create<SimState>((set, get) => ({
@@ -100,6 +105,7 @@ export const useSim = create<SimState>((set, get) => ({
   robotCount: engine.robotCount,
   speed: 6,
   running: true,
+  planner: 'prioritized',
   world: initialWorld,
   snapshot: initialSnapshot,
   optimizer: initialOptimizer,
@@ -113,7 +119,7 @@ export const useSim = create<SimState>((set, get) => ({
   setScenario: (id) => {
     const params = DEFAULT_PARAMS[id];
     const optimizer = makeOptimizer(params);
-    const world = spawnEngine(params, optimizer.recommended);
+    const world = spawnEngine(params, optimizer.recommended, get().planner);
     const snapshot = engine.snapshot();
     set({
       scenario: id,
@@ -129,7 +135,7 @@ export const useSim = create<SimState>((set, get) => ({
   setParam: (key, value) => {
     const params = { ...get().params, [key]: value };
     const optimizer = makeOptimizer(params);
-    const world = spawnEngine(params, get().robotCount);
+    const world = spawnEngine(params, get().robotCount, get().planner);
     const snapshot = engine.snapshot();
     set({
       params,
@@ -148,11 +154,15 @@ export const useSim = create<SimState>((set, get) => ({
   },
 
   setSpeed: (n) => set({ speed: n }),
+  setPlanner: (kind) => {
+    engine.setPlanner(kind);
+    set({ planner: kind });
+  },
   togglePlay: () => set((s) => ({ running: !s.running })),
   applyRecommended: () => get().setRobotCount(get().optimizer.recommended),
 
   reset: () => {
-    const world = spawnEngine(get().params, get().robotCount);
+    const world = spawnEngine(get().params, get().robotCount, get().planner);
     const snapshot = engine.snapshot();
     set({ world, snapshot, robotCount: engine.robotCount, roster: rosterFrom(snapshot) });
   },

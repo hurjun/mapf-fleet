@@ -3,6 +3,7 @@
 /** Live site configuration and playback controls. */
 
 import { useSim } from '@/state/store';
+import { PlannerKind } from '@/sim/engine';
 import { PARAM_BOUNDS } from '@/sim/scenarios';
 import { ScenarioId } from '@/sim/types';
 import { Button, Panel, Segmented, Slider } from './ui';
@@ -12,17 +13,24 @@ const SCENARIOS: Array<{ value: ScenarioId; label: string }> = [
   { value: 'factory', label: 'Factory' },
 ];
 
+const PLANNERS: Array<{ value: PlannerKind; label: string }> = [
+  { value: 'prioritized', label: 'Prioritized' },
+  { value: 'cbs', label: 'CBS (optimal)' },
+];
+
 export function ControlPanel() {
   const scenario = useSim((s) => s.scenario);
   const params = useSim((s) => s.params);
   const robotCount = useSim((s) => s.robotCount);
   const speed = useSim((s) => s.speed);
   const running = useSim((s) => s.running);
+  const planner = useSim((s) => s.planner);
 
   const setScenario = useSim((s) => s.setScenario);
   const setParam = useSim((s) => s.setParam);
   const setRobotCount = useSim((s) => s.setRobotCount);
   const setSpeed = useSim((s) => s.setSpeed);
+  const setPlanner = useSim((s) => s.setPlanner);
   const togglePlay = useSim((s) => s.togglePlay);
   const reset = useSim((s) => s.reset);
 
@@ -83,6 +91,15 @@ export function ControlPanel() {
           hint="Adjust live — robots are added or removed without restarting the run."
         />
         <Slider label="Speed" value={speed} min={1} max={20} unit="×" onChange={setSpeed} />
+
+        <div>
+          <div className="mb-1.5 text-xs text-white/70">Planner</div>
+          <Segmented options={PLANNERS} value={planner} onChange={setPlanner} />
+          <p className="mt-1 text-[10px] leading-snug text-white/35">
+            Prioritized is fast; CBS searches for an optimal conflict-free plan
+            (heavier, falls back when a floor is too tangled).
+          </p>
+        </div>
 
         <div className="flex gap-2 pt-0.5">
           <Button variant="primary" onClick={togglePlay} className="flex-1">

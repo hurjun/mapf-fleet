@@ -15,6 +15,7 @@
  * runs identically in tests and in the browser.
  */
 
+import { planMovesCBS } from './cbs';
 import { ElevatorController } from './elevator';
 import { isWalkable, manhattan } from './grid';
 import { DistanceFieldCache, planMoves, StaticObstacle } from './planner';
@@ -44,7 +45,11 @@ export interface EngineOptions {
   tickSeconds?: number;
   /** Robot kinds to cycle through when spawning. */
   kinds?: RobotKind[];
+  /** Multi-agent planner: fast prioritized planning, or optimal CBS. */
+  planner?: PlannerKind;
 }
+
+export type PlannerKind = 'prioritized' | 'cbs';
 
 const DEFAULT_KINDS: RobotKind[] = ['forklift', 'cart', 'lifter', 'scout'];
 
@@ -65,6 +70,7 @@ export class Engine {
   private controllerById = new Map<number, ElevatorController>();
   private cache: DistanceFieldCache;
   private rng: Rng;
+  private plannerKind: PlannerKind;
 
   private nextRobotId = 0;
   private nextTaskId = 0;
@@ -86,8 +92,10 @@ export class Engine {
       unloadTicks: 4,
       tickSeconds: 1,
       kinds: DEFAULT_KINDS,
+      planner: 'prioritized',
       ...opts,
     };
+    this.plannerKind = this.opts.planner;
     this.rng = new Rng(opts.seed);
     this.cache = new DistanceFieldCache(world);
     this.controllers = world.elevators.map((e) => new ElevatorController(e));
@@ -110,6 +118,11 @@ export class Engine {
     target = Math.max(0, Math.min(target, this.spawnCells.length));
     while (this.robots.length < target) this.addRobot();
     while (this.robots.length > target) this.removeRobot();
+  }
+
+  /** Switch the multi-agent planner live (no restart needed). */
+  setPlanner(kind: PlannerKind): void {
+    this.plannerKind = kind;
   }
 
   step(): void {
@@ -326,7 +339,8 @@ export class Engine {
       }
     }
 
-    planMoves(this.world, navigating, statics, this.cache, this.opts.planWindow);
+    const plan = this.plannerKind === 'cbs' ? planMovesCBS : planMoves;
+    plan(this.world, navigating, statics, this.cache, this.opts.planWindow);
 
     for (const r of navigating) {
       if (r.nextX !== r.x || r.nextY !== r.y) {
