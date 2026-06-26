@@ -96,6 +96,8 @@ interface SimState {
   setCameraPreset: (p: CameraPreset) => void;
   setBloom: (v: boolean) => void;
   togglePlay: () => void;
+  /** Advance the simulation by a single tick (useful while paused). */
+  stepOnce: () => void;
   applyRecommended: () => void;
   reset: () => void;
 }
@@ -247,6 +249,7 @@ export const useSim = create<SimState>((set, get) => ({
   setCameraPreset: (p) => set((s) => ({ cameraPreset: p, cameraNonce: s.cameraNonce + 1 })),
   setBloom: (v) => set({ bloom: v }),
   togglePlay: () => set((s) => ({ running: !s.running })),
+  stepOnce: () => get().tick(),
   applyRecommended: () => get().setRobotCount(get().optimizer.recommended),
 
   reset: () => {

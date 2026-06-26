@@ -47,6 +47,7 @@ export function ControlPanel() {
   const setFocusFloor = useSim((s) => s.setFocusFloor);
   const setBloom = useSim((s) => s.setBloom);
   const togglePlay = useSim((s) => s.togglePlay);
+  const stepOnce = useSim((s) => s.stepOnce);
   const reset = useSim((s) => s.reset);
 
   const B = PARAM_BOUNDS;
@@ -129,10 +130,18 @@ export function ControlPanel() {
           <Button variant="primary" onClick={togglePlay} className="flex-1">
             {running ? 'Pause' : 'Play'}
           </Button>
+          <Button onClick={stepOnce} className="flex-1">
+            Step
+          </Button>
           <Button onClick={reset} className="flex-1">
             Reset
           </Button>
         </div>
+
+        <p className="pt-0.5 text-[10px] leading-relaxed text-white/30">
+          Keys: Space play · S step · P paths · F focus · 1/2/3 view · ↑/↓ floor ·
+          [ / ] speed · Esc deselect
+        </p>
       </div>
     </Panel>
   );
