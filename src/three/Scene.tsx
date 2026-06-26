@@ -41,8 +41,9 @@ export default function Scene() {
       <color attach="background" args={['#0a0c12']} />
       <fog attach="fog" args={['#0a0c12', span * 2.2, span * 6]} />
 
-      <hemisphereLight intensity={0.55} color="#cde3ff" groundColor="#1a2030" />
-      <ambientLight intensity={0.25} />
+      <hemisphereLight intensity={0.5} color="#cde3ff" groundColor="#171c28" />
+      <ambientLight intensity={0.2} />
+      {/* Key light (casts shadows). */}
       <directionalLight
         position={[span * 0.8, top + span, span * 0.5]}
         intensity={1.7}
@@ -56,6 +57,9 @@ export default function Scene() {
         shadow-camera-top={span}
         shadow-camera-bottom={-span}
       />
+      {/* Cool fill from the opposite side for depth, and a warm worksite glow. */}
+      <directionalLight position={[-span * 0.7, top * 0.6 + span * 0.3, -span * 0.6]} intensity={0.45} color="#9fb8ff" />
+      <pointLight position={[0, top * 0.35 + 2, 0]} intensity={0.35} color="#ffd9a0" distance={span * 2.5} decay={2} />
 
       <Building world={world} />
       <Decor />
