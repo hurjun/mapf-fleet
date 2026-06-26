@@ -79,6 +79,9 @@ export interface Snapshot {
   robots: RobotSnapshot[];
   elevators: ElevatorSnapshot[];
   metrics: Metrics;
+  /** Deliveries completed per dropoff cell ("floor|x|y" → count), used to
+   *  visualize construction progress accumulating at install points. */
+  installs: Record<string, number>;
 }
 
 export class Engine {
@@ -109,6 +112,9 @@ export class Engine {
   private totalDeliveries = 0;
   private deliveryTicks: number[] = [];
   private throughput = 0;
+
+  /** Completed deliveries per dropoff cell ("floor|x|y" → count). */
+  private installs = new Map<string, number>();
 
   // Deadlock detection / recovery state.
   private stallTicks = 0;
@@ -185,6 +191,7 @@ export class Engine {
       robots: this.robots.map((r) => this.robotSnapshot(r)),
       elevators: this.controllers.map((c) => c.snapshot(this.queuedFor(c.cfg.id))),
       metrics: this.computeMetrics(),
+      installs: Object.fromEntries(this.installs),
     };
   }
 
@@ -249,7 +256,10 @@ export class Engine {
         r.phase = 'to_dropoff';
         r.dest = null;
       } else {
-        // Delivery complete.
+        // Delivery complete — record an install at the dropoff cell.
+        const d = r.task!.dropoff;
+        const key = cellKey(d.floor, d.x, d.y);
+        this.installs.set(key, (this.installs.get(key) ?? 0) + 1);
         r.carrying = false;
         r.deliveries++;
         r.task = null;

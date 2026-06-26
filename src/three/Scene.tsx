@@ -17,6 +17,7 @@ import { Building } from './Building';
 import { Decor } from './Decor';
 import { Elevators } from './Elevators';
 import { Fleet } from './Fleet';
+import { Installs } from './Installs';
 import { SelectedPath } from './SelectedPath';
 import { AllPaths } from './AllPaths';
 import { HeatLayer } from './HeatLayer';
@@ -58,6 +59,7 @@ export default function Scene() {
 
       <Building world={world} />
       <Decor />
+      <Installs />
       <Elevators />
       <Fleet />
       <HeatLayer />

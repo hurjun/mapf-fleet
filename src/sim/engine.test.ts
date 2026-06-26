@@ -67,6 +67,22 @@ describe('Engine (full simulation)', () => {
     expect(engine.snapshot().robots).toHaveLength(2);
   });
 
+  it('records one install per delivery at dropoff cells', () => {
+    const world = buildWorld(DEFAULT_PARAMS.apartment);
+    const engine = new Engine(world, { robotCount: 10, seed: 4 });
+    for (let t = 0; t < 1400; t++) engine.step();
+    const snap = engine.snapshot();
+    const totalInstalls = Object.values(snap.installs).reduce((a, b) => a + b, 0);
+    expect(snap.metrics.deliveries).toBeGreaterThan(0);
+    // Every completed delivery records exactly one install at its dropoff cell.
+    expect(totalInstalls).toBe(snap.metrics.deliveries);
+    // Installs land only on dropoff cells.
+    const dropoffKeys = new Set(
+      world.stations.filter((s) => s.role === 'dropoff').map((s) => `${s.floor}|${s.x}|${s.y}`),
+    );
+    for (const key of Object.keys(snap.installs)) expect(dropoffKeys.has(key)).toBe(true);
+  });
+
   it('keeps the fleet charged via charging stations', () => {
     const world = buildWorld(DEFAULT_PARAMS.apartment);
     const engine = new Engine(world, { robotCount: 10, seed: 11 });
