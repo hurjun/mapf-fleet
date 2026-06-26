@@ -14,6 +14,7 @@ import * as THREE from 'three';
 import { useSim } from '@/state/store';
 import { World } from '@/sim/types';
 import { Building } from './Building';
+import { Decor } from './Decor';
 import { Elevators } from './Elevators';
 import { Fleet } from './Fleet';
 import { SelectedPath } from './SelectedPath';
@@ -56,6 +57,7 @@ export default function Scene() {
       />
 
       <Building world={world} />
+      <Decor />
       <Elevators />
       <Fleet />
       <HeatLayer />
