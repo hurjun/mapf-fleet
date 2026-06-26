@@ -8,6 +8,23 @@ function run(overrides: Partial<ScenarioParams> = {}, maxRobots = 24) {
 }
 
 describe('optimizeFleet', () => {
+  it('produces sane recommendations for every scenario', () => {
+    for (const id of ['apartment', 'factory', 'warehouse'] as const) {
+      const r = optimizeFleet({
+        params: DEFAULT_PARAMS[id],
+        loadTicks: 4,
+        unloadTicks: 4,
+        tickSeconds: 1,
+        maxRobots: 24,
+      });
+      expect(r.curve).toHaveLength(24);
+      expect(r.maxThroughput).toBeGreaterThan(0);
+      expect(r.recommended).toBeGreaterThanOrEqual(1);
+      expect(r.recommended).toBeLessThanOrEqual(r.best);
+      expect(r.pickupToElevator).toBeGreaterThan(0);
+    }
+  });
+
   it('produces a well-formed result', () => {
     const r = run();
     expect(r.curve).toHaveLength(24);
