@@ -503,7 +503,7 @@ export class Engine {
     for (const r of this.robots) {
       if (r.phase === 'riding') continue;
       const field = this.heat[r.floor];
-      field[r.y * W + r.x] += r.yielding || r.phase === 'awaiting_elevator' ? 1 : 0.12;
+      field[r.y * W + r.x] += r.yielding || r.phase === 'awaiting_elevator' ? 1 : 0.05;
     }
   }
 
