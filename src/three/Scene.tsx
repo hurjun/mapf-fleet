@@ -7,9 +7,10 @@
  */
 
 import { useEffect, useRef } from 'react';
-import { Canvas, useThree } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import { Bloom, EffectComposer } from '@react-three/postprocessing';
+import * as THREE from 'three';
 import { useSim } from '@/state/store';
 import { World } from '@/sim/types';
 import { Building } from './Building';
@@ -18,7 +19,7 @@ import { Fleet } from './Fleet';
 import { SelectedPath } from './SelectedPath';
 import { AllPaths } from './AllPaths';
 import { HeatLayer } from './HeatLayer';
-import { FLOOR_GAP } from './constants';
+import { FLOOR_GAP, floorHeight, toScene } from './constants';
 
 export default function Scene() {
   const world = useSim((s) => s.world);
@@ -121,6 +122,24 @@ function CameraRig({ world }: { world: World }) {
       controls.current.update();
     }
   }, [world, camera, preset, nonce, focusFloor, viewFloor]);
+
+  // Smoothly follow the selected robot: shift the orbit target (and camera by
+  // the same delta, preserving the user's angle/zoom) toward the robot each frame.
+  const follow = useRef(new THREE.Vector3());
+  useFrame((_, dt) => {
+    const s = useSim.getState();
+    if (!s.followSelected || s.selectedRobotId == null || !controls.current) return;
+    const r = s.snapshot.robots.find((x) => x.id === s.selectedRobotId);
+    if (!r) return;
+    const [x, , z] = toScene(r.x, r.y, 0, world.width, world.height);
+    const y = (r.phase === 'riding' ? floorHeight(r.ride) : floorHeight(r.floor)) + 0.3;
+    follow.current.set(x, y, z);
+    const target = controls.current.target as THREE.Vector3;
+    const step = follow.current.sub(target).multiplyScalar(Math.min(1, dt * 3));
+    target.add(step);
+    camera.position.add(step);
+    controls.current.update();
+  });
 
   const span = Math.max(world.width, world.height);
   return (

@@ -69,6 +69,8 @@ interface SimState {
   cameraNonce: number;
   /** Whether bloom post-processing is enabled. */
   bloom: boolean;
+  /** Whether the camera should follow the selected robot. */
+  followSelected: boolean;
 
   world: World;
   snapshot: Snapshot;
@@ -100,6 +102,7 @@ interface SimState {
   setFocusFloor: (v: boolean) => void;
   setCameraPreset: (p: CameraPreset) => void;
   setBloom: (v: boolean) => void;
+  setFollowSelected: (v: boolean) => void;
   togglePlay: () => void;
   /** Advance the simulation by a single tick (useful while paused). */
   stepOnce: () => void;
@@ -169,6 +172,7 @@ export const useSim = create<SimState>((set, get) => ({
   cameraPreset: 'iso',
   cameraNonce: 0,
   bloom: true,
+  followSelected: false,
   world: initialWorld,
   snapshot: initialSnapshot,
   optimizer: initialOptimizer,
@@ -258,6 +262,7 @@ export const useSim = create<SimState>((set, get) => ({
   setFocusFloor: (v) => set({ focusFloor: v }),
   setCameraPreset: (p) => set((s) => ({ cameraPreset: p, cameraNonce: s.cameraNonce + 1 })),
   setBloom: (v) => set({ bloom: v }),
+  setFollowSelected: (v) => set({ followSelected: v }),
   togglePlay: () => set((s) => ({ running: !s.running })),
   stepOnce: () => get().tick(),
   applyRecommended: () => get().setRobotCount(get().optimizer.recommended),
