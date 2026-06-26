@@ -9,6 +9,7 @@ import { OptimizerCard } from '@/components/OptimizerCard';
 import { Legend } from '@/components/Legend';
 import { RobotInspector } from '@/components/RobotInspector';
 import { TimeSeriesPanel } from '@/components/TimeSeriesPanel';
+import { Minimap } from '@/components/Minimap';
 
 // The 3D scene touches WebGL/window, so it must only render on the client.
 const Scene = dynamic(() => import('@/three/Scene'), {
@@ -36,6 +37,7 @@ export default function Page() {
         >
           <Header />
           <ControlPanel />
+          <Minimap />
           <Legend />
         </div>
 

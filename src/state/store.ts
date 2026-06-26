@@ -56,6 +56,10 @@ interface SimState {
   selectedRobotId: number | null;
   /** Whether to draw every robot's planned path. */
   showPaths: boolean;
+  /** Floor shown in the minimap / used by single-floor focus. */
+  viewFloor: number;
+  /** Whether to isolate `viewFloor` in the 3D view (dim the others). */
+  focusFloor: boolean;
 
   world: World;
   snapshot: Snapshot;
@@ -80,6 +84,8 @@ interface SimState {
   setPlanner: (kind: PlannerKind) => void;
   setSelected: (id: number | null) => void;
   setShowPaths: (v: boolean) => void;
+  setViewFloor: (f: number) => void;
+  setFocusFloor: (v: boolean) => void;
   togglePlay: () => void;
   applyRecommended: () => void;
   reset: () => void;
@@ -139,6 +145,8 @@ export const useSim = create<SimState>((set, get) => ({
   planner: 'prioritized',
   selectedRobotId: null,
   showPaths: false,
+  viewFloor: 0,
+  focusFloor: false,
   world: initialWorld,
   snapshot: initialSnapshot,
   optimizer: initialOptimizer,
@@ -185,6 +193,7 @@ export const useSim = create<SimState>((set, get) => ({
       robotCount: engine.robotCount,
       roster: rosterFrom(snapshot),
       selectedRobotId: null,
+      viewFloor: 0,
     });
   },
 
@@ -201,6 +210,7 @@ export const useSim = create<SimState>((set, get) => ({
       robotCount: engine.robotCount,
       roster: rosterFrom(snapshot),
       selectedRobotId: null,
+      viewFloor: 0,
     });
   },
 
@@ -217,6 +227,11 @@ export const useSim = create<SimState>((set, get) => ({
   },
   setSelected: (id) => set({ selectedRobotId: id }),
   setShowPaths: (v) => set({ showPaths: v }),
+  setViewFloor: (f) => {
+    const max = get().world.numFloors - 1;
+    set({ viewFloor: Math.max(0, Math.min(f, max)) });
+  },
+  setFocusFloor: (v) => set({ focusFloor: v }),
   togglePlay: () => set((s) => ({ running: !s.running })),
   applyRecommended: () => get().setRobotCount(get().optimizer.recommended),
 
