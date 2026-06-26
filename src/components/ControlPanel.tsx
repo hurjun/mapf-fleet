@@ -2,7 +2,7 @@
 
 /** Live site configuration and playback controls. */
 
-import { useSim } from '@/state/store';
+import { CameraPreset, useSim } from '@/state/store';
 import { PlannerKind } from '@/sim/engine';
 import { PARAM_BOUNDS } from '@/sim/scenarios';
 import { ScenarioId } from '@/sim/types';
@@ -18,6 +18,12 @@ const PLANNERS: Array<{ value: PlannerKind; label: string }> = [
   { value: 'cbs', label: 'CBS (optimal)' },
 ];
 
+const VIEWS: Array<{ value: CameraPreset; label: string }> = [
+  { value: 'iso', label: 'Iso' },
+  { value: 'top', label: 'Top' },
+  { value: 'side', label: 'Side' },
+];
+
 export function ControlPanel() {
   const scenario = useSim((s) => s.scenario);
   const params = useSim((s) => s.params);
@@ -26,6 +32,8 @@ export function ControlPanel() {
   const running = useSim((s) => s.running);
   const planner = useSim((s) => s.planner);
   const showPaths = useSim((s) => s.showPaths);
+  const cameraPreset = useSim((s) => s.cameraPreset);
+  const focusFloor = useSim((s) => s.focusFloor);
 
   const setScenario = useSim((s) => s.setScenario);
   const setParam = useSim((s) => s.setParam);
@@ -33,6 +41,8 @@ export function ControlPanel() {
   const setSpeed = useSim((s) => s.setSpeed);
   const setPlanner = useSim((s) => s.setPlanner);
   const setShowPaths = useSim((s) => s.setShowPaths);
+  const setCameraPreset = useSim((s) => s.setCameraPreset);
+  const setFocusFloor = useSim((s) => s.setFocusFloor);
   const togglePlay = useSim((s) => s.togglePlay);
   const reset = useSim((s) => s.reset);
 
@@ -104,6 +114,12 @@ export function ControlPanel() {
         </div>
 
         <Toggle label="Show all planned paths" value={showPaths} onChange={setShowPaths} />
+
+        <div>
+          <div className="mb-1.5 text-xs text-white/70">Camera</div>
+          <Segmented options={VIEWS} value={cameraPreset} onChange={setCameraPreset} />
+        </div>
+        <Toggle label="Focus map floor" value={focusFloor} onChange={setFocusFloor} />
 
         <div className="flex gap-2 pt-0.5">
           <Button variant="primary" onClick={togglePlay} className="flex-1">

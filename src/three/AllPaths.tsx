@@ -14,6 +14,8 @@ export function AllPaths() {
   const show = useSim((s) => s.showPaths);
   const snapshot = useSim((s) => s.snapshot);
   const world = useSim((s) => s.world);
+  const focusFloor = useSim((s) => s.focusFloor);
+  const viewFloor = useSim((s) => s.viewFloor);
 
   if (!show) return null;
 
@@ -21,6 +23,7 @@ export function AllPaths() {
     <group>
       {snapshot.robots.map((r) => {
         if (r.path.length < 2) return null;
+        if (focusFloor && r.floor !== viewFloor) return null;
         const points = r.path.map(
           (p) =>
             toScene(p.x, p.y, floorHeight(r.floor) + 0.16, world.width, world.height) as [

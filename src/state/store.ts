@@ -42,6 +42,8 @@ export interface MetricSample {
 
 const HISTORY_LEN = 150;
 
+export type CameraPreset = 'iso' | 'top' | 'side';
+
 interface SimState {
   scenario: ScenarioId;
   params: ScenarioParams;
@@ -60,6 +62,9 @@ interface SimState {
   viewFloor: number;
   /** Whether to isolate `viewFloor` in the 3D view (dim the others). */
   focusFloor: boolean;
+  /** Requested camera framing, with a nonce so re-selecting re-applies it. */
+  cameraPreset: CameraPreset;
+  cameraNonce: number;
 
   world: World;
   snapshot: Snapshot;
@@ -86,6 +91,7 @@ interface SimState {
   setShowPaths: (v: boolean) => void;
   setViewFloor: (f: number) => void;
   setFocusFloor: (v: boolean) => void;
+  setCameraPreset: (p: CameraPreset) => void;
   togglePlay: () => void;
   applyRecommended: () => void;
   reset: () => void;
@@ -147,6 +153,8 @@ export const useSim = create<SimState>((set, get) => ({
   showPaths: false,
   viewFloor: 0,
   focusFloor: false,
+  cameraPreset: 'iso',
+  cameraNonce: 0,
   world: initialWorld,
   snapshot: initialSnapshot,
   optimizer: initialOptimizer,
@@ -232,6 +240,7 @@ export const useSim = create<SimState>((set, get) => ({
     set({ viewFloor: Math.max(0, Math.min(f, max)) });
   },
   setFocusFloor: (v) => set({ focusFloor: v }),
+  setCameraPreset: (p) => set((s) => ({ cameraPreset: p, cameraNonce: s.cameraNonce + 1 })),
   togglePlay: () => set((s) => ({ running: !s.running })),
   applyRecommended: () => get().setRobotCount(get().optimizer.recommended),
 

@@ -99,6 +99,10 @@ const RobotMesh = memo(function RobotMesh({ id, kind }: { id: number; kind: Robo
     if (dx * dx + dz * dz > 1e-5) heading.current = Math.atan2(dx, dz);
     g.rotation.y += (heading.current - g.rotation.y) * Math.min(1, dt * 10);
 
+    // Single-floor focus: hide robots that aren't on the focused floor.
+    const sim = useSim.getState();
+    g.visible = !sim.focusFloor || (r.phase !== 'riding' && r.floor === sim.viewFloor);
+
     // State color drives the shared accent material (beacon + trim).
     const c = tmpColor.current.set(robotColor(r));
     accent.color.lerp(c, 0.25);
