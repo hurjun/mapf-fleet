@@ -34,6 +34,7 @@ export function ControlPanel() {
   const planner = useSim((s) => s.planner);
   const showPaths = useSim((s) => s.showPaths);
   const showHeat = useSim((s) => s.showHeat);
+  const showTrails = useSim((s) => s.showTrails);
   const cameraPreset = useSim((s) => s.cameraPreset);
   const focusFloor = useSim((s) => s.focusFloor);
   const bloom = useSim((s) => s.bloom);
@@ -46,6 +47,7 @@ export function ControlPanel() {
   const setPlanner = useSim((s) => s.setPlanner);
   const setShowPaths = useSim((s) => s.setShowPaths);
   const setShowHeat = useSim((s) => s.setShowHeat);
+  const setShowTrails = useSim((s) => s.setShowTrails);
   const setCameraPreset = useSim((s) => s.setCameraPreset);
   const setFocusFloor = useSim((s) => s.setFocusFloor);
   const setBloom = useSim((s) => s.setBloom);
@@ -123,6 +125,7 @@ export function ControlPanel() {
 
         <Toggle label="Show all planned paths" value={showPaths} onChange={setShowPaths} />
         <Toggle label="Congestion heatmap" value={showHeat} onChange={setShowHeat} />
+        <Toggle label="Motion trails" value={showTrails} onChange={setShowTrails} />
 
         <div>
           <div className="mb-1.5 text-xs text-white/70">Camera</div>

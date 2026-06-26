@@ -60,6 +60,8 @@ interface SimState {
   showPaths: boolean;
   /** Whether to draw the congestion heatmap on the viewed floor. */
   showHeat: boolean;
+  /** Whether to draw fading motion trails behind robots. */
+  showTrails: boolean;
   /** Floor shown in the minimap / used by single-floor focus. */
   viewFloor: number;
   /** Whether to isolate `viewFloor` in the 3D view (dim the others). */
@@ -96,6 +98,7 @@ interface SimState {
   setSelected: (id: number | null) => void;
   setShowPaths: (v: boolean) => void;
   setShowHeat: (v: boolean) => void;
+  setShowTrails: (v: boolean) => void;
   /** Read the current congestion field for a floor (non-reactive). */
   heatAt: (floor: number) => Float32Array;
   setViewFloor: (f: number) => void;
@@ -167,6 +170,7 @@ export const useSim = create<SimState>((set, get) => ({
   selectedRobotId: null,
   showPaths: false,
   showHeat: false,
+  showTrails: false,
   viewFloor: 0,
   focusFloor: false,
   cameraPreset: 'iso',
@@ -254,6 +258,7 @@ export const useSim = create<SimState>((set, get) => ({
   setSelected: (id) => set({ selectedRobotId: id }),
   setShowPaths: (v) => set({ showPaths: v }),
   setShowHeat: (v) => set({ showHeat: v }),
+  setShowTrails: (v) => set({ showTrails: v }),
   heatAt: (floor) => engine.heatField(floor),
   setViewFloor: (f) => {
     const max = get().world.numFloors - 1;

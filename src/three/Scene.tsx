@@ -19,6 +19,7 @@ import { Fleet } from './Fleet';
 import { SelectedPath } from './SelectedPath';
 import { AllPaths } from './AllPaths';
 import { HeatLayer } from './HeatLayer';
+import { Trails } from './Trails';
 import { FLOOR_GAP, floorHeight, toScene } from './constants';
 
 export default function Scene() {
@@ -58,6 +59,7 @@ export default function Scene() {
       <Elevators />
       <Fleet />
       <HeatLayer />
+      <Trails />
       <AllPaths />
       <SelectedPath />
 
