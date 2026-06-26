@@ -118,6 +118,36 @@ export function Stat({
   );
 }
 
+export function Toggle({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <button
+      onClick={() => onChange(!value)}
+      className="flex w-full items-center justify-between py-0.5 text-left"
+    >
+      <span className="text-xs text-white/70">{label}</span>
+      <span
+        className={`relative h-4 w-7 rounded-full transition-colors ${
+          value ? 'bg-accent/50' : 'bg-white/15'
+        }`}
+      >
+        <span
+          className={`absolute top-0.5 h-3 w-3 rounded-full bg-white transition-all ${
+            value ? 'left-[14px]' : 'left-0.5'
+          }`}
+        />
+      </span>
+    </button>
+  );
+}
+
 export function Button({
   children,
   onClick,

@@ -15,6 +15,7 @@ import { Building } from './Building';
 import { Elevators } from './Elevators';
 import { Fleet } from './Fleet';
 import { SelectedPath } from './SelectedPath';
+import { AllPaths } from './AllPaths';
 import { FLOOR_GAP } from './constants';
 
 export default function Scene() {
@@ -52,6 +53,7 @@ export default function Scene() {
       <Building world={world} />
       <Elevators />
       <Fleet />
+      <AllPaths />
       <SelectedPath />
 
       <CameraRig world={world} />

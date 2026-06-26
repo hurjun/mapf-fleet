@@ -6,7 +6,7 @@ import { useSim } from '@/state/store';
 import { PlannerKind } from '@/sim/engine';
 import { PARAM_BOUNDS } from '@/sim/scenarios';
 import { ScenarioId } from '@/sim/types';
-import { Button, Panel, Segmented, Slider } from './ui';
+import { Button, Panel, Segmented, Slider, Toggle } from './ui';
 
 const SCENARIOS: Array<{ value: ScenarioId; label: string }> = [
   { value: 'apartment', label: 'Apartment' },
@@ -25,12 +25,14 @@ export function ControlPanel() {
   const speed = useSim((s) => s.speed);
   const running = useSim((s) => s.running);
   const planner = useSim((s) => s.planner);
+  const showPaths = useSim((s) => s.showPaths);
 
   const setScenario = useSim((s) => s.setScenario);
   const setParam = useSim((s) => s.setParam);
   const setRobotCount = useSim((s) => s.setRobotCount);
   const setSpeed = useSim((s) => s.setSpeed);
   const setPlanner = useSim((s) => s.setPlanner);
+  const setShowPaths = useSim((s) => s.setShowPaths);
   const togglePlay = useSim((s) => s.togglePlay);
   const reset = useSim((s) => s.reset);
 
@@ -100,6 +102,8 @@ export function ControlPanel() {
             (heavier, falls back when a floor is too tangled).
           </p>
         </div>
+
+        <Toggle label="Show all planned paths" value={showPaths} onChange={setShowPaths} />
 
         <div className="flex gap-2 pt-0.5">
           <Button variant="primary" onClick={togglePlay} className="flex-1">

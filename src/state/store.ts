@@ -45,6 +45,8 @@ interface SimState {
   planner: PlannerKind;
   /** Currently inspected robot, or null. */
   selectedRobotId: number | null;
+  /** Whether to draw every robot's planned path. */
+  showPaths: boolean;
 
   world: World;
   snapshot: Snapshot;
@@ -66,6 +68,7 @@ interface SimState {
   setSpeed: (n: number) => void;
   setPlanner: (kind: PlannerKind) => void;
   setSelected: (id: number | null) => void;
+  setShowPaths: (v: boolean) => void;
   togglePlay: () => void;
   applyRecommended: () => void;
   reset: () => void;
@@ -120,6 +123,7 @@ export const useSim = create<SimState>((set, get) => ({
   running: true,
   planner: 'prioritized',
   selectedRobotId: null,
+  showPaths: false,
   world: initialWorld,
   snapshot: initialSnapshot,
   optimizer: initialOptimizer,
@@ -187,6 +191,7 @@ export const useSim = create<SimState>((set, get) => ({
     set({ planner: kind });
   },
   setSelected: (id) => set({ selectedRobotId: id }),
+  setShowPaths: (v) => set({ showPaths: v }),
   togglePlay: () => set((s) => ({ running: !s.running })),
   applyRecommended: () => get().setRobotCount(get().optimizer.recommended),
 
