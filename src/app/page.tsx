@@ -7,6 +7,7 @@ import { ControlPanel } from '@/components/ControlPanel';
 import { StatsPanel } from '@/components/StatsPanel';
 import { OptimizerCard } from '@/components/OptimizerCard';
 import { Legend } from '@/components/Legend';
+import { RobotInspector } from '@/components/RobotInspector';
 
 // The 3D scene touches WebGL/window, so it must only render on the client.
 const Scene = dynamic(() => import('@/three/Scene'), {
@@ -41,6 +42,7 @@ export default function Page() {
           className="flex w-72 max-w-[44vw] flex-col gap-3 overflow-y-auto pl-1"
           style={{ maxHeight: 'calc(100vh - 2rem)' }}
         >
+          <RobotInspector />
           <StatsPanel />
           <OptimizerCard />
         </div>

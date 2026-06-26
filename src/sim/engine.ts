@@ -192,6 +192,7 @@ export class Engine {
       dwell: 0,
       battery: BATTERY.start + this.rng.next() * BATTERY.startSpread,
       chargerId: null,
+      plannedPath: [],
       deliveries: 0,
       waitTicks: 0,
       moveTicks: 0,
@@ -554,6 +555,8 @@ export class Engine {
       x = c.cfg.x;
       y = c.cfg.y;
     }
+    const navigating =
+      r.phase === 'to_pickup' || r.phase === 'to_dropoff' || r.phase === 'to_charger';
     return {
       id: r.id,
       kind: r.kind,
@@ -565,6 +568,9 @@ export class Engine {
       yielding: r.yielding,
       ride,
       battery: r.battery,
+      path: navigating ? r.plannedPath.map((p) => ({ x: p.x, y: p.y })) : [],
+      pickup: r.task ? r.task.pickup : null,
+      dropoff: r.task ? r.task.dropoff : null,
     };
   }
 

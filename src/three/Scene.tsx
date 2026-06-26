@@ -14,6 +14,7 @@ import { World } from '@/sim/types';
 import { Building } from './Building';
 import { Elevators } from './Elevators';
 import { Fleet } from './Fleet';
+import { SelectedPath } from './SelectedPath';
 import { FLOOR_GAP } from './constants';
 
 export default function Scene() {
@@ -27,6 +28,7 @@ export default function Scene() {
       dpr={[1, 2]}
       gl={{ antialias: true }}
       camera={{ position: [span * 0.72, top + span * 0.42, span * 0.72], fov: 42 }}
+      onPointerMissed={() => useSim.getState().setSelected(null)}
     >
       <color attach="background" args={['#0a0c12']} />
       <fog attach="fog" args={['#0a0c12', span * 2.2, span * 6]} />
@@ -50,6 +52,7 @@ export default function Scene() {
       <Building world={world} />
       <Elevators />
       <Fleet />
+      <SelectedPath />
 
       <CameraRig world={world} />
     </Canvas>

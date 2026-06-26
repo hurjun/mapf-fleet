@@ -68,6 +68,7 @@ export function planMoves(
     if (!robot.dest) {
       robot.nextX = robot.x;
       robot.nextY = robot.y;
+      robot.plannedPath = [];
       continue;
     }
 
@@ -98,6 +99,7 @@ export function planMoves(
 
     robot.nextX = result.next.x;
     robot.nextY = result.next.y;
+    robot.plannedPath = result.path;
     const atDest = robot.x === robot.dest.x && robot.y === robot.dest.y;
     robot.yielding = !atDest && result.next.x === robot.x && result.next.y === robot.y;
 

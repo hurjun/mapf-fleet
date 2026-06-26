@@ -43,6 +43,8 @@ interface SimState {
 
   /** Active multi-agent planner. */
   planner: PlannerKind;
+  /** Currently inspected robot, or null. */
+  selectedRobotId: number | null;
 
   world: World;
   snapshot: Snapshot;
@@ -63,6 +65,7 @@ interface SimState {
   setRobotCount: (n: number) => void;
   setSpeed: (n: number) => void;
   setPlanner: (kind: PlannerKind) => void;
+  setSelected: (id: number | null) => void;
   togglePlay: () => void;
   applyRecommended: () => void;
   reset: () => void;
@@ -116,6 +119,7 @@ export const useSim = create<SimState>((set, get) => ({
   speed: 6,
   running: true,
   planner: 'prioritized',
+  selectedRobotId: null,
   world: initialWorld,
   snapshot: initialSnapshot,
   optimizer: initialOptimizer,
@@ -151,6 +155,7 @@ export const useSim = create<SimState>((set, get) => ({
       snapshot,
       robotCount: engine.robotCount,
       roster: rosterFrom(snapshot),
+      selectedRobotId: null,
     });
   },
 
@@ -166,6 +171,7 @@ export const useSim = create<SimState>((set, get) => ({
       snapshot,
       robotCount: engine.robotCount,
       roster: rosterFrom(snapshot),
+      selectedRobotId: null,
     });
   },
 
@@ -180,12 +186,19 @@ export const useSim = create<SimState>((set, get) => ({
     engine.setPlanner(kind);
     set({ planner: kind });
   },
+  setSelected: (id) => set({ selectedRobotId: id }),
   togglePlay: () => set((s) => ({ running: !s.running })),
   applyRecommended: () => get().setRobotCount(get().optimizer.recommended),
 
   reset: () => {
     const world = spawnEngine(get().params, get().robotCount, get().planner);
     const snapshot = engine.snapshot();
-    set({ world, snapshot, robotCount: engine.robotCount, roster: rosterFrom(snapshot) });
+    set({
+      world,
+      snapshot,
+      robotCount: engine.robotCount,
+      roster: rosterFrom(snapshot),
+      selectedRobotId: null,
+    });
   },
 }));

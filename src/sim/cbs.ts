@@ -209,6 +209,7 @@ function applyStep(robot: Robot, path: Coord[]): void {
   const next = path.length > 1 ? path[1] : path[0];
   robot.nextX = next.x;
   robot.nextY = next.y;
+  robot.plannedPath = path;
   const atDest = !!robot.dest && robot.x === robot.dest.x && robot.y === robot.dest.y;
   robot.yielding = !atDest && next.x === robot.x && next.y === robot.y;
 }

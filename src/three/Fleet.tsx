@@ -54,6 +54,7 @@ const RobotMesh = memo(function RobotMesh({ id, kind }: { id: number; kind: Robo
   const group = useRef<THREE.Group>(null);
   const crate = useRef<THREE.Mesh>(null);
   const battery = useRef<THREE.Mesh>(null);
+  const halo = useRef<THREE.Mesh>(null);
 
   // One shared, state-colored material drives every accent on this robot.
   const accent = useMemo(
@@ -74,7 +75,7 @@ const RobotMesh = memo(function RobotMesh({ id, kind }: { id: number; kind: Robo
   const placed = useRef(false);
   const heading = useRef(0);
 
-  useFrame((_, dt) => {
+  useFrame((state, dt) => {
     const r = findRobot(id);
     const g = group.current;
     if (!r || !g) return;
@@ -111,10 +112,37 @@ const RobotMesh = memo(function RobotMesh({ id, kind }: { id: number; kind: Robo
       const mat = battery.current.material as THREE.MeshStandardMaterial;
       mat.color.set(r.battery > 0.5 ? '#4ade80' : r.battery > 0.25 ? '#fbbf24' : '#ef4444');
     }
+
+    // Selection halo, with a gentle pulse.
+    if (halo.current) {
+      const selected = useSim.getState().selectedRobotId === id;
+      halo.current.visible = selected;
+      if (selected) {
+        const s = 1 + Math.sin(state.clock.elapsedTime * 5) * 0.08;
+        halo.current.scale.set(s, s, s);
+      }
+    }
   });
 
   return (
-    <group ref={group}>
+    <group
+      ref={group}
+      onClick={(e) => {
+        e.stopPropagation();
+        useSim.getState().setSelected(id);
+      }}
+      onPointerOver={() => {
+        document.body.style.cursor = 'pointer';
+      }}
+      onPointerOut={() => {
+        document.body.style.cursor = 'auto';
+      }}
+    >
+      {/* Selection halo (hidden unless this robot is selected). */}
+      <mesh ref={halo} rotation-x={-Math.PI / 2} position={[0, 0.04, 0]} visible={false}>
+        <ringGeometry args={[0.55, 0.72, 28]} />
+        <meshBasicMaterial color="#5eead4" transparent opacity={0.85} side={THREE.DoubleSide} />
+      </mesh>
       <group scale={1.35}>
         <RobotBody kind={kind} accent={accent} />
         <mesh ref={crate} position={[0, 0.66, 0]} visible={false} castShadow>

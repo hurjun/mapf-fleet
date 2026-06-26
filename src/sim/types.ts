@@ -153,6 +153,9 @@ export interface Robot {
   /** Station id of the charger this robot has claimed, or null. */
   chargerId: number | null;
 
+  /** Most recent planned path on the current floor (for visualization). */
+  plannedPath: Coord[];
+
   // Per-robot statistics.
   deliveries: number;
   waitTicks: number;
@@ -173,6 +176,11 @@ export interface RobotSnapshot {
   ride: number;
   /** Battery charge in [0, 1]. */
   battery: number;
+  /** Planned path on the current floor (empty unless navigating). */
+  path: Coord[];
+  /** Current task endpoints, if any (for the inspector). */
+  pickup: Cell3 | null;
+  dropoff: Cell3 | null;
 }
 
 export interface ElevatorSnapshot {
