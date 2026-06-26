@@ -39,6 +39,11 @@ multi-agent path-finding (MAPF) engine.
 - **Battery & charging stations.** Robots drain a battery as they work, divert
   to a free charger when low, recharge, and resume — a real capacity-limited
   scheduling constraint, shown with per-robot battery bars.
+- **Reads like a construction site.** Floors are clearly stacked, outlined decks
+  tied together by a steel frame with floor labels; a tower crane (apartment) or
+  gantry crane (factory/warehouse) looms over staged material pallets; elevator
+  cars travel lit shafts; and **installed structure visibly accumulates** at each
+  delivery point as the fleet builds the site out.
 - **Live fleet-size optimizer with model-vs-reality overlay.** An analytical
   throughput model — derived from the *actual* generated layout — predicts
   deliveries/minute vs. fleet size, recommends a deployment, and names the
