@@ -149,7 +149,7 @@ export function ControlPanel() {
 
         <p className="pt-0.5 text-[10px] leading-relaxed text-white/30">
           Keys: Space play · S step · P paths · F focus · 1/2/3 view · ↑/↓ floor ·
-          [ / ] speed · Esc deselect
+          [ / ] speed · U panels · Esc deselect
         </p>
       </div>
     </Panel>

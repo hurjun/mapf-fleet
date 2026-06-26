@@ -75,6 +75,8 @@ interface SimState {
   followSelected: boolean;
   /** Whether the help overlay is open. */
   helpOpen: boolean;
+  /** Whether the control/stat panels are hidden (for clean 3D captures). */
+  uiHidden: boolean;
 
   world: World;
   snapshot: Snapshot;
@@ -109,6 +111,7 @@ interface SimState {
   setBloom: (v: boolean) => void;
   setFollowSelected: (v: boolean) => void;
   setHelpOpen: (v: boolean) => void;
+  setUiHidden: (v: boolean) => void;
   togglePlay: () => void;
   /** Advance the simulation by a single tick (useful while paused). */
   stepOnce: () => void;
@@ -181,6 +184,7 @@ export const useSim = create<SimState>((set, get) => ({
   bloom: true,
   followSelected: false,
   helpOpen: false,
+  uiHidden: false,
   world: initialWorld,
   snapshot: initialSnapshot,
   optimizer: initialOptimizer,
@@ -277,6 +281,7 @@ export const useSim = create<SimState>((set, get) => ({
   setBloom: (v) => set({ bloom: v }),
   setFollowSelected: (v) => set({ followSelected: v }),
   setHelpOpen: (v) => set({ helpOpen: v }),
+  setUiHidden: (v) => set({ uiHidden: v }),
   togglePlay: () => set((s) => ({ running: !s.running })),
   stepOnce: () => get().tick(),
   applyRecommended: () => get().setRobotCount(get().optimizer.recommended),

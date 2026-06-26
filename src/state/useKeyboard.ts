@@ -64,6 +64,10 @@ export function useKeyboard(): void {
         case ']':
           s.setSpeed(Math.min(20, s.speed + 1));
           break;
+        case 'u':
+        case 'U':
+          s.setUiHidden(!s.uiHidden);
+          break;
         case '?':
         case 'h':
         case 'H':

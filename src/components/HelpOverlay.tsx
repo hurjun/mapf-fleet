@@ -90,7 +90,7 @@ export function HelpOverlay() {
 
             <Bullets title="Shortcuts">
               <li>Space play/pause · S step · P paths · F focus · ? help</li>
-              <li>1/2/3 camera · ↑/↓ floor · [ / ] speed · Esc close/deselect</li>
+              <li>1/2/3 camera · ↑/↓ floor · [ / ] speed · U panels · Esc close</li>
             </Bullets>
           </div>
         </div>

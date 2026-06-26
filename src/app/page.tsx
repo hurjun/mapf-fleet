@@ -1,6 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import { useSim } from '@/state/store';
 import { useSimLoop } from '@/state/useSimLoop';
 import { useKeyboard } from '@/state/useKeyboard';
 import { useUrlSync } from '@/state/useUrlSync';
@@ -30,34 +31,48 @@ export default function Page() {
   useKeyboard();
   useUrlSync();
 
+  const uiHidden = useSim((s) => s.uiHidden);
+  const setUiHidden = useSim((s) => s.setUiHidden);
+
   return (
     <main className="relative h-full w-full overflow-hidden">
       <Scene />
 
+      {/* Hide/show panels — useful for clean, unobstructed 3D captures. */}
+      <button
+        onClick={() => setUiHidden(!uiHidden)}
+        className="pointer-events-auto absolute left-1/2 top-3 z-50 -translate-x-1/2 rounded-full border border-white/15 bg-panel px-3 py-1 text-[11px] text-white/60 shadow-xl backdrop-blur-md transition-colors hover:text-accent"
+        title="Toggle panels (U)"
+      >
+        {uiHidden ? 'Show panels' : 'Hide panels'}
+      </button>
+
       {/* Control overlay. The container ignores pointer events; each panel
           re-enables them so the canvas stays draggable in the gaps. */}
-      <div className="pointer-events-none absolute inset-0 flex items-start justify-between gap-3 p-4">
-        <div
-          className="flex w-72 max-w-[44vw] flex-col gap-3 overflow-y-auto pr-1"
-          style={{ maxHeight: 'calc(100vh - 2rem)' }}
-        >
-          <Header />
-          <ControlPanel />
-          <Minimap />
-          <Legend />
-        </div>
+      {!uiHidden && (
+        <div className="pointer-events-none absolute inset-0 flex items-start justify-between gap-3 p-4">
+          <div
+            className="flex w-72 max-w-[44vw] flex-col gap-3 overflow-y-auto pr-1"
+            style={{ maxHeight: 'calc(100vh - 2rem)' }}
+          >
+            <Header />
+            <ControlPanel />
+            <Minimap />
+            <Legend />
+          </div>
 
-        <div
-          className="flex w-72 max-w-[44vw] flex-col gap-3 overflow-y-auto pl-1"
-          style={{ maxHeight: 'calc(100vh - 2rem)' }}
-        >
-          <RobotInspector />
-          <StatsPanel />
-          <OptimizerCard />
-          <TimeSeriesPanel />
-          <BenchmarkCard />
+          <div
+            className="flex w-72 max-w-[44vw] flex-col gap-3 overflow-y-auto pl-1"
+            style={{ maxHeight: 'calc(100vh - 2rem)' }}
+          >
+            <RobotInspector />
+            <StatsPanel />
+            <OptimizerCard />
+            <TimeSeriesPanel />
+            <BenchmarkCard />
+          </div>
         </div>
-      </div>
+      )}
 
       <HelpOverlay />
     </main>
