@@ -232,3 +232,7 @@ configuration:
 Built by **hurjun** as a portfolio project exploring multi-agent path finding,
 fleet coordination, and capacity planning for robot fleets in construction and
 logistics settings.
+
+## License
+
+Released under the [MIT License](LICENSE).
