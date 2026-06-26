@@ -73,6 +73,8 @@ interface SimState {
   bloom: boolean;
   /** Whether the camera should follow the selected robot. */
   followSelected: boolean;
+  /** Whether the help overlay is open. */
+  helpOpen: boolean;
 
   world: World;
   snapshot: Snapshot;
@@ -106,6 +108,7 @@ interface SimState {
   setCameraPreset: (p: CameraPreset) => void;
   setBloom: (v: boolean) => void;
   setFollowSelected: (v: boolean) => void;
+  setHelpOpen: (v: boolean) => void;
   togglePlay: () => void;
   /** Advance the simulation by a single tick (useful while paused). */
   stepOnce: () => void;
@@ -177,6 +180,7 @@ export const useSim = create<SimState>((set, get) => ({
   cameraNonce: 0,
   bloom: true,
   followSelected: false,
+  helpOpen: false,
   world: initialWorld,
   snapshot: initialSnapshot,
   optimizer: initialOptimizer,
@@ -268,6 +272,7 @@ export const useSim = create<SimState>((set, get) => ({
   setCameraPreset: (p) => set((s) => ({ cameraPreset: p, cameraNonce: s.cameraNonce + 1 })),
   setBloom: (v) => set({ bloom: v }),
   setFollowSelected: (v) => set({ followSelected: v }),
+  setHelpOpen: (v) => set({ helpOpen: v }),
   togglePlay: () => set((s) => ({ running: !s.running })),
   stepOnce: () => get().tick(),
   applyRecommended: () => get().setRobotCount(get().optimizer.recommended),

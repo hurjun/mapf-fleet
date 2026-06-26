@@ -56,8 +56,14 @@ export function useKeyboard(): void {
         case ']':
           s.setSpeed(Math.min(20, s.speed + 1));
           break;
+        case '?':
+        case 'h':
+        case 'H':
+          s.setHelpOpen(!s.helpOpen);
+          break;
         case 'Escape':
-          s.setSelected(null);
+          if (s.helpOpen) s.setHelpOpen(false);
+          else s.setSelected(null);
           break;
         default:
           break;
