@@ -33,6 +33,15 @@ export interface RosterEntry {
   kind: RobotKind;
 }
 
+/** One sampled point of the live metric time series. */
+export interface MetricSample {
+  throughput: number;
+  congestion: number;
+  elevator: number;
+}
+
+const HISTORY_LEN = 150;
+
 interface SimState {
   scenario: ScenarioId;
   params: ScenarioParams;
@@ -59,6 +68,8 @@ interface SimState {
    * can compare the model to reality. Reset whenever the building changes.
    */
   measured: Record<number, number>;
+  /** Rolling history of recent metric samples for the time-series charts. */
+  history: MetricSample[];
 
   // Actions.
   tick: () => void;
@@ -81,6 +92,9 @@ let engine!: Engine;
 // Smoothed measured throughput per fleet size; reset when the building changes.
 let measuredThroughput: Record<number, number> = {};
 
+// Rolling metric history (module-level ring buffer; reset on rebuild).
+let history: MetricSample[] = [];
+
 function makeOptimizer(params: ScenarioParams): OptimizeResult {
   return optimizeFleet({
     params,
@@ -93,6 +107,7 @@ function makeOptimizer(params: ScenarioParams): OptimizeResult {
 
 function spawnEngine(params: ScenarioParams, robotCount: number, planner: PlannerKind): World {
   measuredThroughput = {}; // a new building invalidates past measurements
+  history = [];
   const world = buildWorld(params);
   engine = new Engine(world, {
     robotCount,
@@ -129,6 +144,7 @@ export const useSim = create<SimState>((set, get) => ({
   optimizer: initialOptimizer,
   roster: rosterFrom(initialSnapshot),
   measured: {},
+  history: [],
 
   tick: () => {
     engine.step();
@@ -143,7 +159,16 @@ export const useSim = create<SimState>((set, get) => ({
         [rc]: prev * 0.97 + snapshot.metrics.throughput * 0.03,
       };
     }
-    set({ snapshot, measured: measuredThroughput });
+
+    const m = snapshot.metrics;
+    history = history.concat({
+      throughput: m.throughput,
+      congestion: m.congestion,
+      elevator: m.elevatorUtilization,
+    });
+    if (history.length > HISTORY_LEN) history = history.slice(history.length - HISTORY_LEN);
+
+    set({ snapshot, measured: measuredThroughput, history });
   },
 
   setScenario: (id) => {
