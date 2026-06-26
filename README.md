@@ -27,20 +27,26 @@ multi-agent path-finding (MAPF) engine.
 - **Two switchable construction sites.** A tall **apartment** high-rise (every
   job crosses floors, so the elevators dominate) and a wide **factory** (busy
   on-floor traffic plus elevator use) — same engine, different layouts.
+- **Two planners, switchable live.** The fast prioritized planner, or
+  **Conflict-Based Search (CBS)** — an optimal MAPF algorithm — toggled from the
+  UI without restarting the run.
 - **Capacity-limited elevators with queues.** Each car runs a LOOK-style
   scheduler; robots form a visible line at the boarding pad and the car fills to
   capacity before departing.
-- **Live fleet-size optimizer.** An analytical throughput model — derived from
-  the *actual* generated layout — predicts deliveries/minute vs. fleet size,
-  recommends a deployment, and names the binding bottleneck (elevators vs. floor
-  congestion). The running simulation reports the *measured* throughput so you
-  can compare model against reality.
+- **Battery & charging stations.** Robots drain a battery as they work, divert
+  to a free charger when low, recharge, and resume — a real capacity-limited
+  scheduling constraint, shown with per-robot battery bars.
+- **Live fleet-size optimizer with model-vs-reality overlay.** An analytical
+  throughput model — derived from the *actual* generated layout — predicts
+  deliveries/minute vs. fleet size, recommends a deployment, and names the
+  binding bottleneck. The measured throughput from the running simulation is
+  plotted right on top of the prediction.
 - **Configure everything live.** Floors, elevator count and capacity, floor
-  size, fleet size, and speed are all adjustable while the simulation runs —
-  robots are added or removed without restarting.
-- **Readable at a glance.** Robots are color-coded by state (heading to a
-  pickup, carrying, yielding, waiting for a lift, riding), so what the fleet is
-  doing is always obvious.
+  size, fleet size, planner, and speed are all adjustable while the simulation
+  runs — robots are added or removed without restarting.
+- **Readable at a glance.** Robots are detailed per-kind models color-coded by
+  state (heading to a pickup, carrying, yielding, waiting for a lift, riding,
+  charging), so what the fleet is doing is always obvious.
 
 ---
 
@@ -77,6 +83,14 @@ Robots navigate with a **prioritized, cooperative** scheme:
    planner also reserves each not-yet-planned robot's current cell for the next
    tick, which **guarantees no two robots ever land on the same cell**.
 
+Alternatively, the **CBS** planner (`cbs.ts`) can be selected at runtime. It is
+a two-level search: a high-level best-first search over a binary *constraint
+tree* finds the first vertex/edge conflict between two agents and branches,
+forbidding one agent from it, while a constrained low-level space-time A\*
+replans just that agent. It runs per floor over the window with a node budget,
+falling back to the prioritized planner if a floor can't be resolved in budget,
+so it stays real-time and never stalls.
+
 ### Elevators
 
 `elevator.ts` models each car as a capacity-limited transport running a
@@ -86,6 +100,15 @@ reverse, otherwise idle. A full car ignores hall calls and heads straight for
 its riders' destinations. The shaft sits *between* the boarding and exit pads so
 the boarding queue can never block an exit — a subtle but important
 deadlock-avoidance detail.
+
+### Battery & charging
+
+Each robot drains a battery as it works (faster while carrying). When it drops
+below a threshold it claims the nearest free charger on its floor, drives there,
+recharges, and resumes. Chargers hold one robot at a time, so charging is a
+genuine scheduling constraint rather than a cosmetic detail. The optimizer folds
+the resulting charging duty cycle into an **availability factor** so its
+prediction stays aligned with the simulation.
 
 ### Fleet-size optimizer
 
@@ -99,7 +122,9 @@ reverse-BFS distance fields), then combines:
 
 Sweeping the fleet size yields the throughput curve; its knee is the
 **recommended** fleet (the smallest one within 95% of the peak), and the binding
-term identifies the **bottleneck**. The full derivation is documented inline.
+term identifies the **bottleneck**. The full derivation is documented inline. As
+the simulation runs, the measured throughput at each fleet size is recorded and
+drawn as points over the predicted curve — model versus reality, side by side.
 
 ---
 
@@ -124,8 +149,9 @@ src/
 │   ├── astar.ts         # A* and windowed space-time A* (WHCA*)
 │   ├── reservation.ts   # space-time reservation table
 │   ├── planner.ts       # prioritized multi-agent planner
+│   ├── cbs.ts           # Conflict-Based Search (optimal) planner
 │   ├── elevator.ts      # elevator car + LOOK scheduler
-│   ├── engine.ts        # task generation, robot state machine, tick loop
+│   ├── engine.ts        # tasks, robot state machine, battery, tick loop
 │   ├── scenarios.ts     # apartment / factory world generators
 │   └── optimize.ts      # analytical fleet-size optimizer
 ├── state/               # Zustand store + real-time tick loop
@@ -173,10 +199,10 @@ configuration:
 
 ## Possible extensions
 
-- Conflict-Based Search (CBS) as an optimal alternative to prioritized planning.
-- Battery levels and charging stations as an additional constraint.
-- Calibrating the optimizer online against the measured throughput.
-- Heterogeneous robot speeds and footprints.
+- Heterogeneous robot speeds and footprints (multi-cell robots).
+- Auto-calibrating the optimizer's constants from the measured points.
+- Priority/deadline-aware task assignment instead of unlimited uniform demand.
+- Bounded-suboptimal CBS variants (ECBS) for larger fleets.
 
 ## Author
 
