@@ -104,6 +104,8 @@ interface SimState {
   /** Advance the simulation by a single tick (useful while paused). */
   stepOnce: () => void;
   applyRecommended: () => void;
+  /** Apply a full configuration at once (used to restore from a URL). */
+  applyConfig: (params: ScenarioParams, robotCount: number, planner: PlannerKind) => void;
   reset: () => void;
 }
 
@@ -259,6 +261,24 @@ export const useSim = create<SimState>((set, get) => ({
   togglePlay: () => set((s) => ({ running: !s.running })),
   stepOnce: () => get().tick(),
   applyRecommended: () => get().setRobotCount(get().optimizer.recommended),
+
+  applyConfig: (params, robotCount, planner) => {
+    const optimizer = makeOptimizer(params);
+    const world = spawnEngine(params, robotCount, planner);
+    const snapshot = engine.snapshot();
+    set({
+      scenario: params.scenario,
+      params,
+      planner,
+      optimizer,
+      world,
+      snapshot,
+      robotCount: engine.robotCount,
+      roster: rosterFrom(snapshot),
+      selectedRobotId: null,
+      viewFloor: 0,
+    });
+  },
 
   reset: () => {
     const world = spawnEngine(get().params, get().robotCount, get().planner);

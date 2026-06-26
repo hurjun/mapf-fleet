@@ -3,6 +3,7 @@
 import dynamic from 'next/dynamic';
 import { useSimLoop } from '@/state/useSimLoop';
 import { useKeyboard } from '@/state/useKeyboard';
+import { useUrlSync } from '@/state/useUrlSync';
 import { Header } from '@/components/Header';
 import { ControlPanel } from '@/components/ControlPanel';
 import { StatsPanel } from '@/components/StatsPanel';
@@ -25,6 +26,7 @@ const Scene = dynamic(() => import('@/three/Scene'), {
 export default function Page() {
   useSimLoop();
   useKeyboard();
+  useUrlSync();
 
   return (
     <main className="relative h-full w-full overflow-hidden">
