@@ -1,5 +1,7 @@
 # MAPF Fleet — Multi-Robot Construction-Site Simulator
 
+[![CI](https://github.com/hurjun/mapf-fleet/actions/workflows/ci.yml/badge.svg)](https://github.com/hurjun/mapf-fleet/actions/workflows/ci.yml)
+
 An interactive, real-time **3D simulation of a multi-robot fleet** working a
 multi-floor construction site. Dozens of robots move materials between floors
 while planning **collision-free paths**, **yielding** to one another in tight
