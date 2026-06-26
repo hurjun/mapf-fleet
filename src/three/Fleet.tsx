@@ -8,23 +8,28 @@
  * reads its own latest state from the store (non-reactively) and:
  *   - eases toward its target cell (smooth motion between discrete sim ticks),
  *   - turns to face its direction of travel,
- *   - tints itself by state (green = to pickup, blue = carrying, amber =
- *     yielding, orange = waiting for a lift, …),
+ *   - drives a state-colored status beacon/panel (green = to pickup, blue =
+ *     carrying, amber = yielding, orange = waiting for a lift, …) so what each
+ *     robot is doing is obvious at a glance,
  *   - and shows a crate while it is carrying material.
  *
- * The four kinds get distinct silhouettes (forklift, cart, lifter, scout) so a
- * mixed fleet reads clearly.
+ * The four kinds get distinct, detailed silhouettes — a counter-balance
+ * forklift, a flat AMR cart, a scissor lifter, and a small sensor scout — built
+ * from neutral industrial materials with a shared, state-colored accent
+ * material for the beacon and trim.
  */
 
-import { memo, useRef } from 'react';
+import { memo, useEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useSim } from '@/state/store';
 import { RobotKind, RobotSnapshot } from '@/sim/types';
 import { ROBOT_Y, floorHeight, robotColor, toScene } from './constants';
 
-const DARK = '#1f2733';
-const WHEEL = '#0d1119';
+const BODY = '#3a4453'; // neutral industrial chassis
+const DARK = '#1c222c'; // tires, frames, sensors
+const METAL = '#9aa6b6'; // forks, hubs
+const HEADLIGHT = '#fff6d8';
 const CRATE = '#c08a52';
 
 /** Look up a robot's current snapshot by id (cheap at this fleet size). */
@@ -47,8 +52,21 @@ export function Fleet() {
 
 const RobotMesh = memo(function RobotMesh({ id, kind }: { id: number; kind: RobotKind }) {
   const group = useRef<THREE.Group>(null);
-  const bodyMat = useRef<THREE.MeshStandardMaterial>(null);
   const crate = useRef<THREE.Mesh>(null);
+
+  // One shared, state-colored material drives every accent on this robot.
+  const accent = useMemo(
+    () =>
+      new THREE.MeshStandardMaterial({
+        color: new THREE.Color('#4ade80'),
+        emissive: new THREE.Color('#4ade80'),
+        emissiveIntensity: 0.85,
+        metalness: 0.3,
+        roughness: 0.4,
+      }),
+    [],
+  );
+  useEffect(() => () => accent.dispose(), [accent]);
 
   const target = useRef(new THREE.Vector3());
   const tmpColor = useRef(new THREE.Color('#4ade80'));
@@ -79,128 +97,178 @@ const RobotMesh = memo(function RobotMesh({ id, kind }: { id: number; kind: Robo
     if (dx * dx + dz * dz > 1e-5) heading.current = Math.atan2(dx, dz);
     g.rotation.y += (heading.current - g.rotation.y) * Math.min(1, dt * 10);
 
-    // State color (also drives a soft emissive glow so robots stand out).
-    if (bodyMat.current) {
-      const c = tmpColor.current.set(robotColor(r));
-      bodyMat.current.color.lerp(c, 0.25);
-      bodyMat.current.emissive.lerp(c, 0.25);
-    }
+    // State color drives the shared accent material (beacon + trim).
+    const c = tmpColor.current.set(robotColor(r));
+    accent.color.lerp(c, 0.25);
+    accent.emissive.lerp(c, 0.25);
 
-    // Carried crate.
     if (crate.current) crate.current.visible = r.carrying;
   });
 
   return (
     <group ref={group}>
-      {/* Scaled up a touch so the fleet reads clearly against the structure. */}
       <group scale={1.35}>
-        <RobotBody kind={kind} bodyMat={bodyMat} />
-        <mesh ref={crate} position={[0, 0.55, 0]} visible={false} castShadow>
-          <boxGeometry args={[0.34, 0.3, 0.34]} />
-          <meshStandardMaterial color={CRATE} roughness={0.8} />
+        <RobotBody kind={kind} accent={accent} />
+        <mesh ref={crate} position={[0, 0.66, 0]} visible={false} castShadow>
+          <boxGeometry args={[0.32, 0.28, 0.32]} />
+          <meshStandardMaterial color={CRATE} roughness={0.85} />
         </mesh>
       </group>
     </group>
   );
 });
 
-/** Per-kind geometry. The primary (state-colored) part carries `bodyMat`. */
-function RobotBody({
-  kind,
-  bodyMat,
-}: {
-  kind: RobotKind;
-  bodyMat: React.RefObject<THREE.MeshStandardMaterial>;
-}) {
-  const body = (args: [number, number, number], y: number) => (
-    <mesh position={[0, y, 0]} castShadow>
-      <boxGeometry args={args} />
-      <meshStandardMaterial
-        ref={bodyMat}
-        color="#4ade80"
-        emissive="#4ade80"
-        emissiveIntensity={0.55}
-        roughness={0.55}
-        metalness={0.25}
-      />
+/** A tire with a metal hub. */
+function Wheel({ position }: { position: [number, number, number] }) {
+  return (
+    <group position={position} rotation={[0, 0, Math.PI / 2]}>
+      <mesh castShadow>
+        <cylinderGeometry args={[0.1, 0.1, 0.09, 16]} />
+        <meshStandardMaterial color={DARK} roughness={0.85} />
+      </mesh>
+      <mesh>
+        <cylinderGeometry args={[0.05, 0.05, 0.1, 12]} />
+        <meshStandardMaterial color={METAL} metalness={0.6} roughness={0.4} />
+      </mesh>
+    </group>
+  );
+}
+
+function Headlight({ position }: { position: [number, number, number] }) {
+  return (
+    <mesh position={position}>
+      <boxGeometry args={[0.07, 0.05, 0.03]} />
+      <meshStandardMaterial color={HEADLIGHT} emissive={HEADLIGHT} emissiveIntensity={1.1} />
     </mesh>
   );
+}
 
+/** A neutral box helper. */
+function Part({
+  args,
+  position,
+  rotation,
+  color = BODY,
+  metalness = 0.45,
+  roughness = 0.5,
+}: {
+  args: [number, number, number];
+  position: [number, number, number];
+  rotation?: [number, number, number];
+  color?: string;
+  metalness?: number;
+  roughness?: number;
+}) {
+  return (
+    <mesh position={position} rotation={rotation} castShadow>
+      <boxGeometry args={args} />
+      <meshStandardMaterial color={color} metalness={metalness} roughness={roughness} />
+    </mesh>
+  );
+}
+
+/** A state-colored accent box sharing the per-robot accent material. */
+function Accent({
+  args,
+  position,
+  accent,
+}: {
+  args: [number, number, number];
+  position: [number, number, number];
+  accent: THREE.Material;
+}) {
+  return (
+    <mesh position={position} material={accent} castShadow>
+      <boxGeometry args={args} />
+    </mesh>
+  );
+}
+
+/** Per-kind geometry. The accent material conveys live state. */
+function RobotBody({ kind, accent }: { kind: RobotKind; accent: THREE.MeshStandardMaterial }) {
   switch (kind) {
     case 'forklift':
       return (
         <group>
-          {body([0.5, 0.3, 0.62], 0.2)}
-          <mesh position={[0, 0.44, -0.12]} castShadow>
-            <boxGeometry args={[0.34, 0.26, 0.28]} />
-            <meshStandardMaterial color={DARK} roughness={0.6} />
-          </mesh>
-          <mesh position={[0, 0.3, 0.34]}>
-            <boxGeometry args={[0.07, 0.5, 0.07]} />
-            <meshStandardMaterial color={DARK} />
-          </mesh>
-          <mesh position={[0, 0.08, 0.42]}>
-            <boxGeometry args={[0.3, 0.05, 0.22]} />
-            <meshStandardMaterial color="#9aa6b6" metalness={0.4} roughness={0.5} />
-          </mesh>
-          <Wheels />
+          <Part args={[0.5, 0.26, 0.5]} position={[0, 0.24, -0.04]} />
+          <Part args={[0.5, 0.34, 0.18]} position={[0, 0.26, -0.28]} color={DARK} />
+          {/* Cab frame + state-colored roof. */}
+          <Part args={[0.05, 0.34, 0.05]} position={[0.2, 0.5, -0.18]} color={DARK} />
+          <Part args={[0.05, 0.34, 0.05]} position={[-0.2, 0.5, -0.18]} color={DARK} />
+          <Accent args={[0.46, 0.05, 0.3]} position={[0, 0.66, -0.18]} accent={accent} />
+          {/* Mast + forks. */}
+          <Part args={[0.06, 0.62, 0.06]} position={[0.13, 0.42, 0.26]} color={DARK} />
+          <Part args={[0.06, 0.62, 0.06]} position={[-0.13, 0.42, 0.26]} color={DARK} />
+          <Part args={[0.07, 0.04, 0.32]} position={[0.1, 0.07, 0.42]} color={METAL} metalness={0.7} />
+          <Part args={[0.07, 0.04, 0.32]} position={[-0.1, 0.07, 0.42]} color={METAL} metalness={0.7} />
+          <Headlight position={[0.16, 0.22, 0.26]} />
+          <Headlight position={[-0.16, 0.22, 0.26]} />
+          <Wheel position={[0.26, 0.1, 0.18]} />
+          <Wheel position={[-0.26, 0.1, 0.18]} />
+          <Wheel position={[0.24, 0.1, -0.22]} />
+          <Wheel position={[-0.24, 0.1, -0.22]} />
         </group>
       );
     case 'cart':
       return (
         <group>
-          {body([0.6, 0.16, 0.78], 0.16)}
-          <Wheels wide />
+          <Part args={[0.64, 0.13, 0.82]} position={[0, 0.17, 0]} />
+          <Part args={[0.56, 0.05, 0.74]} position={[0, 0.25, 0]} color={DARK} roughness={0.7} />
+          {/* Side status strips. */}
+          <Accent args={[0.66, 0.05, 0.08]} position={[0, 0.17, 0.42]} accent={accent} />
+          <Accent args={[0.66, 0.05, 0.08]} position={[0, 0.17, -0.42]} accent={accent} />
+          {/* Lidar puck + beacon. */}
+          <mesh position={[0, 0.31, 0.3]}>
+            <cylinderGeometry args={[0.07, 0.07, 0.06, 14]} />
+            <meshStandardMaterial color={DARK} metalness={0.4} roughness={0.4} />
+          </mesh>
+          <mesh position={[0, 0.34, -0.28]} material={accent}>
+            <cylinderGeometry args={[0.05, 0.05, 0.08, 14]} />
+          </mesh>
+          <Wheel position={[0.34, 0.1, 0.3]} />
+          <Wheel position={[-0.34, 0.1, 0.3]} />
+          <Wheel position={[0.34, 0.1, -0.3]} />
+          <Wheel position={[-0.34, 0.1, -0.3]} />
         </group>
       );
     case 'lifter':
       return (
         <group>
-          <mesh position={[0, 0.12, 0]} castShadow>
-            <boxGeometry args={[0.5, 0.22, 0.5]} />
-            <meshStandardMaterial color={DARK} roughness={0.6} />
+          <Part args={[0.5, 0.2, 0.5]} position={[0, 0.14, 0]} />
+          {/* Scissor X-frame. */}
+          <Part args={[0.05, 0.5, 0.05]} position={[0, 0.42, 0.1]} rotation={[0, 0, 0.5]} color={DARK} />
+          <Part args={[0.05, 0.5, 0.05]} position={[0, 0.42, 0.1]} rotation={[0, 0, -0.5]} color={DARK} />
+          <Part args={[0.05, 0.5, 0.05]} position={[0, 0.42, -0.1]} rotation={[0, 0, 0.5]} color={DARK} />
+          <Part args={[0.05, 0.5, 0.05]} position={[0, 0.42, -0.1]} rotation={[0, 0, -0.5]} color={DARK} />
+          {/* State-colored lift platform + beacon. */}
+          <Accent args={[0.5, 0.1, 0.5]} position={[0, 0.72, 0]} accent={accent} />
+          <mesh position={[0.18, 0.26, 0.22]} material={accent}>
+            <cylinderGeometry args={[0.04, 0.04, 0.08, 12]} />
           </mesh>
-          <mesh position={[0, 0.34, 0]}>
-            <boxGeometry args={[0.12, 0.3, 0.12]} />
-            <meshStandardMaterial color={DARK} />
-          </mesh>
-          {body([0.46, 0.16, 0.46], 0.56)}
-          <Wheels />
+          <Wheel position={[0.26, 0.1, 0.22]} />
+          <Wheel position={[-0.26, 0.1, 0.22]} />
+          <Wheel position={[0.26, 0.1, -0.22]} />
+          <Wheel position={[-0.26, 0.1, -0.22]} />
         </group>
       );
     case 'scout':
     default:
       return (
         <group>
-          {body([0.4, 0.2, 0.46], 0.18)}
+          <Part args={[0.4, 0.2, 0.5]} position={[0, 0.2, 0]} />
+          {/* Glowing status band around the body. */}
+          <Accent args={[0.43, 0.05, 0.52]} position={[0, 0.22, 0]} accent={accent} />
+          {/* Sensor dome + camera bump. */}
           <mesh position={[0, 0.36, 0]} castShadow>
             <sphereGeometry args={[0.12, 16, 16]} />
-            <meshStandardMaterial color={DARK} metalness={0.3} roughness={0.4} />
+            <meshStandardMaterial color={DARK} metalness={0.35} roughness={0.4} />
           </mesh>
-          <Wheels />
+          <Headlight position={[0, 0.22, 0.26]} />
+          <Wheel position={[0.22, 0.1, 0.12]} />
+          <Wheel position={[-0.22, 0.1, 0.12]} />
+          <Wheel position={[0.22, 0.1, -0.16]} />
+          <Wheel position={[-0.22, 0.1, -0.16]} />
         </group>
       );
   }
-}
-
-/** Four simple wheels; `wide` spaces them for the flat cart. */
-function Wheels({ wide = false }: { wide?: boolean }) {
-  const dx = wide ? 0.32 : 0.26;
-  const dz = wide ? 0.32 : 0.24;
-  const positions: Array<[number, number, number]> = [
-    [dx, 0.06, dz],
-    [-dx, 0.06, dz],
-    [dx, 0.06, -dz],
-    [-dx, 0.06, -dz],
-  ];
-  return (
-    <group>
-      {positions.map((p, i) => (
-        <mesh key={i} position={p} rotation={[0, 0, Math.PI / 2]}>
-          <cylinderGeometry args={[0.08, 0.08, 0.08, 12]} />
-          <meshStandardMaterial color={WHEEL} roughness={0.7} />
-        </mesh>
-      ))}
-    </group>
-  );
 }
