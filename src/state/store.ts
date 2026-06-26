@@ -228,6 +228,8 @@ export const useSim = create<SimState>((set, get) => ({
       roster: rosterFrom(snapshot),
       selectedRobotId: null,
       viewFloor: 0,
+      measured: {},
+      history: [],
     });
   },
 
@@ -245,6 +247,8 @@ export const useSim = create<SimState>((set, get) => ({
       roster: rosterFrom(snapshot),
       selectedRobotId: null,
       viewFloor: 0,
+      measured: {},
+      history: [],
     });
   },
 
@@ -292,6 +296,8 @@ export const useSim = create<SimState>((set, get) => ({
       roster: rosterFrom(snapshot),
       selectedRobotId: null,
       viewFloor: 0,
+      measured: {},
+      history: [],
     });
   },
 
@@ -304,6 +310,8 @@ export const useSim = create<SimState>((set, get) => ({
       robotCount: engine.robotCount,
       roster: rosterFrom(snapshot),
       selectedRobotId: null,
+      measured: {},
+      history: [],
     });
   },
 }));

@@ -23,7 +23,9 @@ export function useSimLoop(): void {
       raf = requestAnimationFrame(loop);
       const { running, speed, tick } = useSim.getState();
 
-      const dt = (now - last) / 1000;
+      // Clamp dt so a backgrounded/throttled tab (which pauses rAF) doesn't
+      // return one huge frame and fast-forward the simulation in a burst.
+      const dt = Math.min((now - last) / 1000, 0.25);
       last = now;
       if (!running) {
         accumulator = 0;

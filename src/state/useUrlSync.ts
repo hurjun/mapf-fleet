@@ -6,13 +6,25 @@
  * query once on mount, then keeps the URL updated as the configuration changes.
  */
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useSim } from './store';
 import { PlannerKind } from '@/sim/engine';
+import { optimizeFleet } from '@/sim/optimize';
 import { DEFAULT_PARAMS, PARAM_BOUNDS, ScenarioParams } from '@/sim/scenarios';
 import { ScenarioId } from '@/sim/types';
 
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
+
+/** Recommended fleet size for a given building (matches the store's optimizer). */
+function recommendedFor(params: ScenarioParams): number {
+  return optimizeFleet({
+    params,
+    loadTicks: 4,
+    unloadTicks: 4,
+    tickSeconds: 1,
+    maxRobots: PARAM_BOUNDS.robotCount.max,
+  }).recommended;
+}
 
 export function useUrlSync(): void {
   // Restore from the URL on first mount.
@@ -38,7 +50,9 @@ export function useUrlSync(): void {
       width: num('w', base.width, PARAM_BOUNDS.width),
       height: num('h', base.height, PARAM_BOUNDS.height),
     };
-    const robotCount = num('n', useSim.getState().optimizer.recommended, PARAM_BOUNDS.robotCount);
+    // Default the fleet to the recommendation for *this* building (not the
+    // initial scenario's), used only when the URL omits `n`.
+    const robotCount = num('n', recommendedFor(params), PARAM_BOUNDS.robotCount);
     const planner: PlannerKind = q.get('p') === 'cbs' ? 'cbs' : 'prioritized';
 
     useSim.getState().applyConfig(params, robotCount, planner);
@@ -50,7 +64,14 @@ export function useUrlSync(): void {
   const robotCount = useSim((s) => s.robotCount);
   const planner = useSim((s) => s.planner);
 
+  // Skip the very first persist so we don't clobber the incoming URL before the
+  // restore effect's applyConfig has been reflected in the store.
+  const mounted = useRef(false);
   useEffect(() => {
+    if (!mounted.current) {
+      mounted.current = true;
+      return;
+    }
     const q = new URLSearchParams();
     q.set('s', scenario);
     q.set('f', String(params.numFloors));
