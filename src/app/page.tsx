@@ -13,6 +13,7 @@ import { RobotInspector } from '@/components/RobotInspector';
 import { TimeSeriesPanel } from '@/components/TimeSeriesPanel';
 import { Minimap } from '@/components/Minimap';
 import { HelpOverlay } from '@/components/HelpOverlay';
+import { BenchmarkCard } from '@/components/BenchmarkCard';
 
 // The 3D scene touches WebGL/window, so it must only render on the client.
 const Scene = dynamic(() => import('@/three/Scene'), {
@@ -54,6 +55,7 @@ export default function Page() {
           <StatsPanel />
           <OptimizerCard />
           <TimeSeriesPanel />
+          <BenchmarkCard />
         </div>
       </div>
 
