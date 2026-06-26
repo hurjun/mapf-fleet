@@ -24,9 +24,10 @@ multi-agent path-finding (MAPF) engine.
   reservation table. Collisions and head-on swaps are provably avoided, and
   yielding/queuing behavior **emerges** from the planner rather than being
   scripted.
-- **Two switchable construction sites.** A tall **apartment** high-rise (every
-  job crosses floors, so the elevators dominate) and a wide **factory** (busy
-  on-floor traffic plus elevator use) — same engine, different layouts.
+- **Three switchable sites.** A tall **apartment** high-rise (every job crosses
+  floors, so the elevators dominate), a wide multi-floor **factory**, and a
+  **warehouse** of storage aisles feeding shipping docks — same engine, different
+  layouts.
 - **Two planners, switchable live.** The fast prioritized planner, or
   **Conflict-Based Search (CBS)** — an optimal MAPF algorithm — toggled from the
   UI without restarting the run.
@@ -141,7 +142,12 @@ drawn as points over the predicted curve — model versus reality, side by side.
 - **Trends** charts plot throughput, congestion, and elevator load over time.
 - **Camera presets** (iso / top / side) and **single-floor focus** isolate a
   level for close inspection.
+- **Congestion heatmap** highlights where the fleet stalls (elevator queues,
+  pinch points).
 - **Planner toggle** switches prioritized ↔ CBS live; **Glow** toggles bloom.
+- **Step mode + keyboard shortcuts** (Space, S, P, F, 1/2/3, arrows, [ / ], Esc).
+- **Shareable URL**: the configuration lives in the query string; **Download CSV**
+  exports the run's metric history.
 
 ---
 
