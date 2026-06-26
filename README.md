@@ -41,6 +41,10 @@ multi-agent path-finding (MAPF) engine.
   deliveries/minute vs. fleet size, recommends a deployment, and names the
   binding bottleneck. The measured throughput from the running simulation is
   plotted right on top of the prediction.
+- **Inspect and visualize.** Click any robot for a live inspector and its
+  planned path; toggle all paths to watch the planner coordinate the fleet; read
+  a 2D floor minimap, live trend charts, camera presets, and a single-floor focus
+  mode — with optional bloom for a striking look.
 - **Configure everything live.** Floors, elevator count and capacity, floor
   size, fleet size, planner, and speed are all adjustable while the simulation
   runs — robots are added or removed without restarting.
@@ -128,6 +132,19 @@ drawn as points over the predicted curve — model versus reality, side by side.
 
 ---
 
+## Exploring the simulation
+
+- **Click a robot** to select it: a halo marks it, its planned path is drawn, and
+  an inspector shows its live status, battery, task, and plan.
+- **Show all planned paths** to see the whole fleet's coordinated plans at once.
+- **Floor minimap** gives a 2D top-down plan; clicking a dot selects that robot.
+- **Trends** charts plot throughput, congestion, and elevator load over time.
+- **Camera presets** (iso / top / side) and **single-floor focus** isolate a
+  level for close inspection.
+- **Planner toggle** switches prioritized ↔ CBS live; **Glow** toggles bloom.
+
+---
+
 ## Tech stack
 
 | Layer        | Technology                                            |
@@ -155,8 +172,8 @@ src/
 │   ├── scenarios.ts     # apartment / factory world generators
 │   └── optimize.ts      # analytical fleet-size optimizer
 ├── state/               # Zustand store + real-time tick loop
-├── three/               # React Three Fiber scene (building, fleet, elevators)
-├── components/          # control / metrics / optimizer UI panels
+├── three/               # R3F scene: building, fleet, elevators, paths, bloom
+├── components/          # control / metrics / optimizer / inspector / minimap UI
 └── app/                 # Next.js app-router entry
 ```
 
