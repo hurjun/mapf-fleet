@@ -45,6 +45,7 @@ export function Building({ world }: { world: World }) {
       <InstanceGroup positions={geometry.structures} args={[0.42, 0.9, 0.42]} color={COLORS.column} />
       <InstanceGroup positions={geometry.pickups} args={[0.7, 0.07, 0.7]} color={COLORS.pickup} emissive />
       <InstanceGroup positions={geometry.dropoffs} args={[0.7, 0.07, 0.7]} color={COLORS.dropoff} emissive />
+      <InstanceGroup positions={geometry.chargers} args={[0.7, 0.09, 0.7]} color={COLORS.charger} emissive />
       <InstanceGroup positions={geometry.boardPads} args={[0.74, 0.09, 0.74]} color={COLORS.boardPad} emissive />
       <InstanceGroup positions={geometry.exitPads} args={[0.74, 0.09, 0.74]} color={COLORS.exitPad} emissive />
 
@@ -109,9 +110,12 @@ function buildGeometry(world: World) {
 
   const pickups: Vec3[] = [];
   const dropoffs: Vec3[] = [];
+  const chargers: Vec3[] = [];
   for (const s of world.stations) {
     const pos = toScene(s.x, s.y, floorHeight(s.floor) + 0.02, width, height);
-    (s.role === 'pickup' ? pickups : dropoffs).push(pos);
+    if (s.role === 'pickup') pickups.push(pos);
+    else if (s.role === 'dropoff') dropoffs.push(pos);
+    else chargers.push(pos);
   }
 
   const boardPads: Vec3[] = [];
@@ -123,5 +127,5 @@ function buildGeometry(world: World) {
     }
   }
 
-  return { structures, pickups, dropoffs, boardPads, exitPads };
+  return { structures, pickups, dropoffs, chargers, boardPads, exitPads };
 }

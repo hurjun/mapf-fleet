@@ -61,4 +61,14 @@ describe('Engine (full simulation)', () => {
     for (let t = 0; t < 200; t++) engine.step();
     expect(engine.snapshot().robots).toHaveLength(2);
   });
+
+  it('keeps the fleet charged via charging stations', () => {
+    const world = buildWorld(DEFAULT_PARAMS.apartment);
+    const engine = new Engine(world, { robotCount: 10, seed: 11 });
+    for (let t = 0; t < 1600; t++) engine.step();
+    const m = engine.snapshot().metrics;
+    // Without working chargers the fleet would drain toward empty in ~800 ticks.
+    expect(m.avgBattery).toBeGreaterThan(0.3);
+    expect(m.deliveries).toBeGreaterThan(0);
+  });
 });

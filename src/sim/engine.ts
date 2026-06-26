@@ -53,6 +53,22 @@ export type PlannerKind = 'prioritized' | 'cbs';
 
 const DEFAULT_KINDS: RobotKind[] = ['forklift', 'cart', 'lifter', 'scout'];
 
+/**
+ * Battery model. Drain is per active tick (higher while carrying); a robot
+ * diverts to a charger once it drops below `low`, and recharges at `charge`/tick.
+ * Exported so the optimizer can fold the resulting charging downtime into its
+ * availability factor.
+ */
+export const BATTERY = {
+  start: 0.55,
+  startSpread: 0.45,
+  low: 0.25,
+  drainIdle: 0.0005,
+  drainMove: 0.0012,
+  drainCarry: 0.0016,
+  charge: 0.012,
+} as const;
+
 export interface Snapshot {
   tick: number;
   robots: RobotSnapshot[];
@@ -78,6 +94,9 @@ export class Engine {
 
   private pickups: Station[];
   private dropoffs: Station[];
+  private chargers: Station[];
+  private chargerById = new Map<number, Station>();
+  private occupiedChargers = new Set<number>();
 
   tick = 0;
   private totalDeliveries = 0;
@@ -103,6 +122,8 @@ export class Engine {
 
     this.pickups = world.stations.filter((s) => s.role === 'pickup');
     this.dropoffs = world.stations.filter((s) => s.role === 'dropoff');
+    this.chargers = world.stations.filter((s) => s.role === 'charger');
+    for (const c of this.chargers) this.chargerById.set(c.id, c);
     this.spawnCells = this.computeSpawnCells();
 
     this.setRobotCount(this.opts.robotCount);
@@ -128,11 +149,13 @@ export class Engine {
   step(): void {
     this.tick++;
     this.updateDwell();
+    this.updateCharging();
     this.assignTasks();
     this.resolveDestinations();
     this.stepElevators();
     this.planAndMove();
     this.handleArrivals();
+    this.updateBattery();
     this.updateThroughput();
   }
 
@@ -167,6 +190,8 @@ export class Engine {
       elevatorId: null,
       targetFloor: null,
       dwell: 0,
+      battery: BATTERY.start + this.rng.next() * BATTERY.startSpread,
+      chargerId: null,
       deliveries: 0,
       waitTicks: 0,
       moveTicks: 0,
@@ -182,6 +207,7 @@ export class Engine {
     if (robot.phase === 'riding' && robot.elevatorId != null) {
       this.controllerById.get(robot.elevatorId)?.removeRider(robot.id);
     }
+    if (robot.chargerId != null) this.occupiedChargers.delete(robot.chargerId);
   }
 
   // ---- per-tick stages ----------------------------------------------------
@@ -207,10 +233,42 @@ export class Engine {
     }
   }
 
+  /** Recharge robots parked on chargers; release them when full. */
+  private updateCharging(): void {
+    for (const r of this.robots) {
+      if (r.phase !== 'charging') continue;
+      r.battery = Math.min(1, r.battery + BATTERY.charge);
+      if (r.battery >= 0.999) {
+        if (r.chargerId != null) this.occupiedChargers.delete(r.chargerId);
+        r.chargerId = null;
+        r.phase = 'idle';
+        r.dest = null;
+      }
+    }
+  }
+
   private assignTasks(): void {
     if (this.pickups.length === 0 || this.dropoffs.length === 0) return;
     for (const r of this.robots) {
       if (r.phase !== 'idle') continue;
+
+      // Low battery → divert to a free charger on this floor instead of working.
+      if (r.battery < BATTERY.low) {
+        const charger = this.chooseCharger(r);
+        if (charger) {
+          this.occupiedChargers.add(charger.id);
+          r.chargerId = charger.id;
+          r.phase = 'to_charger';
+          r.task = null;
+          r.carrying = false;
+          r.elevatorId = null;
+          r.targetFloor = null;
+          r.dest = null;
+          continue;
+        }
+        // No free charger right now; take work and retry charging later.
+      }
+
       r.task = this.makeTask();
       r.phase = 'to_pickup';
       r.carrying = false;
@@ -218,6 +276,21 @@ export class Engine {
       r.targetFloor = null;
       r.dest = null;
     }
+  }
+
+  /** Nearest free charger on the robot's current floor, or null. */
+  private chooseCharger(r: Robot): Station | null {
+    let best: Station | null = null;
+    let bestD = Infinity;
+    for (const c of this.chargers) {
+      if (c.floor !== r.floor || this.occupiedChargers.has(c.id)) continue;
+      const d = manhattan(r.x, r.y, c.x, c.y);
+      if (d < bestD) {
+        bestD = d;
+        best = c;
+      }
+    }
+    return best;
   }
 
   private makeTask(): Task {
@@ -241,6 +314,12 @@ export class Engine {
 
   private resolveDestinations(): void {
     for (const r of this.robots) {
+      if (r.phase === 'to_charger') {
+        // Chargers are always on the robot's current floor (chosen that way).
+        const c = r.chargerId != null ? this.chargerById.get(r.chargerId) : undefined;
+        r.dest = c ? { floor: c.floor, x: c.x, y: c.y } : null;
+        continue;
+      }
       if (r.phase !== 'to_pickup' && r.phase !== 'to_dropoff') {
         r.dest = null;
         continue;
@@ -332,7 +411,9 @@ export class Engine {
     const statics: StaticObstacle[] = [];
     for (const r of this.robots) {
       if (r.phase === 'riding') continue;
-      if ((r.phase === 'to_pickup' || r.phase === 'to_dropoff') && r.dest) {
+      const navigates =
+        r.phase === 'to_pickup' || r.phase === 'to_dropoff' || r.phase === 'to_charger';
+      if (navigates && r.dest) {
         navigating.push(r);
       } else {
         statics.push({ floor: r.floor, x: r.x, y: r.y });
@@ -358,6 +439,13 @@ export class Engine {
 
   private handleArrivals(): void {
     for (const r of this.robots) {
+      if (r.phase === 'to_charger') {
+        if (r.dest && r.x === r.dest.x && r.y === r.dest.y) {
+          r.phase = 'charging';
+          r.dest = null;
+        }
+        continue;
+      }
       if (r.phase !== 'to_pickup' && r.phase !== 'to_dropoff') continue;
       if (!r.dest) continue;
       if (r.x !== r.dest.x || r.y !== r.dest.y) continue;
@@ -380,6 +468,18 @@ export class Engine {
     }
   }
 
+  /** Drain battery for every active (non-charging) robot. */
+  private updateBattery(): void {
+    for (const r of this.robots) {
+      if (r.phase === 'charging') continue;
+      let drain: number = BATTERY.drainIdle;
+      if (r.phase === 'to_pickup' || r.phase === 'to_dropoff' || r.phase === 'to_charger') {
+        drain = r.carrying ? BATTERY.drainCarry : BATTERY.drainMove;
+      }
+      r.battery = Math.max(0, r.battery - drain);
+    }
+  }
+
   // ---- metrics ------------------------------------------------------------
 
   private updateThroughput(): void {
@@ -397,8 +497,10 @@ export class Engine {
     let moving = 0;
     let waiting = 0;
     let totalWait = 0;
+    let totalBattery = 0;
     for (const r of this.robots) {
       totalWait += r.waitTicks;
+      totalBattery += r.battery;
       const navigating = r.phase === 'to_pickup' || r.phase === 'to_dropoff';
       if (navigating && !r.yielding) moving++;
       if (r.yielding || r.phase === 'awaiting_elevator') waiting++;
@@ -417,6 +519,7 @@ export class Engine {
       congestion: waiting / n,
       elevatorUtilization,
       avgWaitPerDelivery: totalWait / Math.max(1, this.totalDeliveries),
+      avgBattery: totalBattery / n,
     };
   }
 
@@ -461,6 +564,7 @@ export class Engine {
       carrying: r.carrying,
       yielding: r.yielding,
       ride,
+      battery: r.battery,
     };
   }
 

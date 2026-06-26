@@ -68,7 +68,8 @@ export function buildWorld(p: ScenarioParams): World {
   else addMachineBlocks(floors, 8, 6);
 
   const elevators = addElevators(floors, p);
-  const stations = p.scenario === 'apartment' ? apartmentStations(floors) : factoryStations(floors);
+  const base = p.scenario === 'apartment' ? apartmentStations(floors) : factoryStations(floors);
+  const stations = base.concat(addChargers(floors, base.length));
 
   // Make sure every station sits on a clear, walkable cell.
   for (const s of stations) floors[s.floor].cells[idx(s.x, s.y, width)] = Cell.Free;
@@ -179,6 +180,19 @@ function factoryStations(floors: FloorGrid[]): Station[] {
     }
   }
   return stations;
+}
+
+/** Two charging stations per floor, on the side edges, clear of the core. */
+function addChargers(floors: FloorGrid[], startId: number): Station[] {
+  const chargers: Station[] = [];
+  let id = startId;
+  for (const g of floors) {
+    const y = Math.floor(g.height / 2);
+    for (const x of [1, g.width - 2]) {
+      chargers.push({ id: id++, role: 'charger', label: 'charger', x, y, floor: g.floor });
+    }
+  }
+  return chargers;
 }
 
 // ---- helpers --------------------------------------------------------------

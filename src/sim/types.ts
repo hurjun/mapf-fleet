@@ -38,7 +38,7 @@ export interface FloorGrid {
   cells: Uint8Array;
 }
 
-export type StationRole = 'pickup' | 'dropoff';
+export type StationRole = 'pickup' | 'dropoff' | 'charger';
 
 /**
  * A pickup or dropoff point. Robots drive onto a station cell, dwell briefly to
@@ -100,7 +100,9 @@ export type RobotPhase =
   | 'to_dropoff' // navigating toward the dropoff
   | 'unloading' // dwelling at the dropoff
   | 'awaiting_elevator' // standing on a boarding pad, waiting for a car
-  | 'riding'; // inside an elevator car between floors
+  | 'riding' // inside an elevator car between floors
+  | 'to_charger' // battery low; heading to a charging station
+  | 'charging'; // parked on a charger, recharging
 
 /** A delivery job: move one unit of material from a pickup to a dropoff. */
 export interface Task {
@@ -146,6 +148,11 @@ export interface Robot {
   /** Remaining dwell ticks for loading/unloading. */
   dwell: number;
 
+  /** Battery charge in [0, 1]. */
+  battery: number;
+  /** Station id of the charger this robot has claimed, or null. */
+  chargerId: number | null;
+
   // Per-robot statistics.
   deliveries: number;
   waitTicks: number;
@@ -164,6 +171,8 @@ export interface RobotSnapshot {
   yielding: boolean;
   /** Continuous riding progress (0..1) used to animate elevator travel. */
   ride: number;
+  /** Battery charge in [0, 1]. */
+  battery: number;
 }
 
 export interface ElevatorSnapshot {
@@ -192,4 +201,6 @@ export interface Metrics {
   elevatorUtilization: number;
   /** Average ticks a robot has spent waiting per delivery. */
   avgWaitPerDelivery: number;
+  /** Mean battery charge across the fleet (0..1). */
+  avgBattery: number;
 }

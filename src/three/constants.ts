@@ -43,6 +43,7 @@ export const COLORS = {
   dropoff: '#60a5fa',
   boardPad: '#fbbf24',
   exitPad: '#fb923c',
+  charger: '#22d3ee',
   ground: '#0c1018',
 };
 
@@ -51,6 +52,8 @@ export const COLORS = {
  * visually obvious — which is exactly what the simulation is meant to show.
  */
 export function robotColor(r: RobotSnapshot): string {
+  if (r.phase === 'charging') return '#22d3ee'; // cyan — recharging
+  if (r.phase === 'to_charger') return '#06b6d4'; // dim cyan — heading to charge
   if (r.phase === 'riding') return '#a78bfa'; // violet — inside an elevator
   if (r.phase === 'awaiting_elevator') return '#fb923c'; // orange — queued at a lift
   if (r.yielding) return '#fbbf24'; // amber — yielding to let another robot pass
@@ -68,4 +71,5 @@ export const STATE_LEGEND: Array<{ label: string; color: string }> = [
   { label: 'Waiting for lift', color: '#fb923c' },
   { label: 'Riding', color: '#a78bfa' },
   { label: 'At station', color: '#f472b6' },
+  { label: 'Charging', color: '#22d3ee' },
 ];

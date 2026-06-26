@@ -19,6 +19,7 @@ export function StatsPanel() {
         <Stat label="Waiting" value={pct(m.congestion)} />
         <Stat label="Elevator load" value={pct(m.elevatorUtilization)} />
         <Stat label="Avg wait" value={`${m.avgWaitPerDelivery.toFixed(0)}s`} />
+        <Stat label="Avg battery" value={pct(m.avgBattery)} />
       </div>
     </Panel>
   );

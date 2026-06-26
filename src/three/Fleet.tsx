@@ -53,6 +53,7 @@ export function Fleet() {
 const RobotMesh = memo(function RobotMesh({ id, kind }: { id: number; kind: RobotKind }) {
   const group = useRef<THREE.Group>(null);
   const crate = useRef<THREE.Mesh>(null);
+  const battery = useRef<THREE.Mesh>(null);
 
   // One shared, state-colored material drives every accent on this robot.
   const accent = useMemo(
@@ -103,6 +104,13 @@ const RobotMesh = memo(function RobotMesh({ id, kind }: { id: number; kind: Robo
     accent.emissive.lerp(c, 0.25);
 
     if (crate.current) crate.current.visible = r.carrying;
+
+    // Battery bar: width tracks charge, color goes green → amber → red.
+    if (battery.current) {
+      battery.current.scale.x = Math.max(0.04, r.battery);
+      const mat = battery.current.material as THREE.MeshStandardMaterial;
+      mat.color.set(r.battery > 0.5 ? '#4ade80' : r.battery > 0.25 ? '#fbbf24' : '#ef4444');
+    }
   });
 
   return (
@@ -112,6 +120,15 @@ const RobotMesh = memo(function RobotMesh({ id, kind }: { id: number; kind: Robo
         <mesh ref={crate} position={[0, 0.66, 0]} visible={false} castShadow>
           <boxGeometry args={[0.32, 0.28, 0.32]} />
           <meshStandardMaterial color={CRATE} roughness={0.85} />
+        </mesh>
+        {/* Battery indicator floating above the robot. */}
+        <mesh position={[0, 0.92, 0]}>
+          <boxGeometry args={[0.36, 0.06, 0.06]} />
+          <meshStandardMaterial color={DARK} />
+        </mesh>
+        <mesh ref={battery} position={[0, 0.92, 0.01]}>
+          <boxGeometry args={[0.34, 0.05, 0.06]} />
+          <meshStandardMaterial color="#4ade80" emissive="#4ade80" emissiveIntensity={0.5} />
         </mesh>
       </group>
     </group>

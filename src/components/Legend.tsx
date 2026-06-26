@@ -10,6 +10,7 @@ const MARKERS: Array<{ label: string; color: string }> = [
   { label: 'Dropoff', color: COLORS.dropoff },
   { label: 'Lift board', color: COLORS.boardPad },
   { label: 'Lift exit', color: COLORS.exitPad },
+  { label: 'Charger', color: COLORS.charger },
 ];
 
 function Swatch({ label, color }: { label: string; color: string }) {

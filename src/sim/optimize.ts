@@ -44,6 +44,7 @@
  *    tells us whether the site is elevator-bound or congestion-bound.
  */
 
+import { BATTERY } from './engine';
 import { distanceField, idx } from './grid';
 import { buildWorld, ScenarioParams } from './scenarios';
 import { Station, World } from './types';
@@ -136,6 +137,16 @@ export function optimizeFleet(input: OptimizeInput): OptimizeResult {
 
   const perMinute = 60 / tickSeconds;
 
+  // Charging duty cycle: a robot works while draining from full to the low
+  // threshold, then sits out while recharging. `availability` is the fraction
+  // of time it is actually productive — it scales the whole curve down so the
+  // model lines up with the (charging-aware) simulation.
+  const usable = 1 - BATTERY.low;
+  const drainActive = (BATTERY.drainMove + BATTERY.drainCarry) / 2;
+  const activeTicks = usable / drainActive;
+  const chargeTicks = usable / BATTERY.charge;
+  const availability = activeTicks / (activeTicks + chargeTicks);
+
   const floorThroughputPerTick = (n: number): number => {
     const density = n / Math.max(1, freeCells);
     const speed = Math.max(MIN_SPEED, 1 - density / JAM_DENSITY);
@@ -147,7 +158,7 @@ export function optimizeFleet(input: OptimizeInput): OptimizeResult {
   let best = 1;
   let maxThroughput = 0;
   for (let n = 1; n <= maxRobots; n++) {
-    const perTick = Math.min(floorThroughputPerTick(n), elevatorCeilingPerTick);
+    const perTick = Math.min(floorThroughputPerTick(n) * availability, elevatorCeilingPerTick);
     const throughput = perTick * perMinute;
     curve.push({ robots: n, throughput });
     if (throughput > maxThroughput) {
@@ -168,7 +179,7 @@ export function optimizeFleet(input: OptimizeInput): OptimizeResult {
 
   // Classify the binding constraint at the peak.
   let bottleneck: Bottleneck;
-  if (elevatorCeilingPerTick < floorThroughputPerTick(best) * 0.999) {
+  if (elevatorCeilingPerTick < floorThroughputPerTick(best) * availability * 0.999) {
     bottleneck = 'elevators';
   } else if (best < maxRobots) {
     bottleneck = 'congestion'; // throughput peaked before the slider's max
