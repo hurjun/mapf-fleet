@@ -87,6 +87,8 @@ export class Engine {
   private cache: DistanceFieldCache;
   private rng: Rng;
   private plannerKind: PlannerKind;
+  /** Decaying per-cell congestion accumulator, one array per floor. */
+  private heat: Float32Array[];
 
   private nextRobotId = 0;
   private nextTaskId = 0;
@@ -124,6 +126,7 @@ export class Engine {
     this.dropoffs = world.stations.filter((s) => s.role === 'dropoff');
     this.chargers = world.stations.filter((s) => s.role === 'charger');
     for (const c of this.chargers) this.chargerById.set(c.id, c);
+    this.heat = world.floors.map(() => new Float32Array(world.width * world.height));
     this.spawnCells = this.computeSpawnCells();
 
     this.setRobotCount(this.opts.robotCount);
@@ -156,7 +159,13 @@ export class Engine {
     this.planAndMove();
     this.handleArrivals();
     this.updateBattery();
+    this.updateHeat();
     this.updateThroughput();
+  }
+
+  /** Per-floor congestion field this layer reads to draw the heatmap. */
+  heatField(floor: number): Float32Array {
+    return this.heat[floor] ?? new Float32Array(0);
   }
 
   snapshot(): Snapshot {
@@ -478,6 +487,23 @@ export class Engine {
         drain = r.carrying ? BATTERY.drainCarry : BATTERY.drainMove;
       }
       r.battery = Math.max(0, r.battery - drain);
+    }
+  }
+
+  /**
+   * Decay the congestion field and add the current footprint. Waiting/yielding
+   * robots deposit much more heat than moving ones, so hotspots mark where the
+   * fleet actually stalls (elevator queues, pinch points).
+   */
+  private updateHeat(): void {
+    const W = this.world.width;
+    for (const field of this.heat) {
+      for (let i = 0; i < field.length; i++) field[i] *= 0.985;
+    }
+    for (const r of this.robots) {
+      if (r.phase === 'riding') continue;
+      const field = this.heat[r.floor];
+      field[r.y * W + r.x] += r.yielding || r.phase === 'awaiting_elevator' ? 1 : 0.12;
     }
   }
 
