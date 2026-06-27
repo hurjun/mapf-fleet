@@ -201,6 +201,13 @@ building under each planner and reports the classic MAPF trade-off: CBS yields
 smoother coordination (less waiting) at a much higher compute cost than
 prioritized planning.
 
+For a headless, multi-seed sweep — per-tick planning latency, throughput, and a
+per-tick collision check across fleet sizes and scenarios — run `npm run bench`
+(`scripts/benchmark.ts` over the pure helpers in `src/sim/scaling.ts`). The
+measured tables, scaling chart, and prioritized-vs-CBS comparison are written up
+in the [Performance & scaling](README.md#performance--scaling) section of the
+README.
+
 ---
 
 ## 8. Adjacent components

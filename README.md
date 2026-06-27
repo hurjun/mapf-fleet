@@ -184,6 +184,95 @@ A deliberately honest scope, so the engineering claims are easy to verify.
 
 ---
 
+## Performance & scaling
+
+A headless benchmark ([`scripts/benchmark.ts`](scripts/benchmark.ts), driven by
+the pure library in [`src/sim/scaling.ts`](src/sim/scaling.ts)) drives the **real
+engine** — no rendering — across fleet sizes, scenarios, and seeds. For each run
+it times only the per-tick `Engine.step()` call (which is dominated by the
+multi-agent planner), records the delivery throughput and coordination quality
+the planner achieves, and **re-checks the collision-free invariant on every
+tick**. Reproduce it with `npm run bench`; it regenerates the figure below and
+[`docs/benchmark.json`](docs/benchmark.json).
+
+![Throughput and planning latency vs fleet size](docs/benchmark-scaling.svg)
+
+Each row below averages **3 seeds × 300 timed ticks** (40-tick warm-up) under the
+prioritized WHCA\* planner. *Planning* is the mean wall-clock time per tick;
+*Success* is the fraction of seeds that stayed collision-free and live.
+
+**apartment** — 6 floors, 24×18, 2 elevators (cap 2):
+
+| Agents | Throughput (del/min) | Planning (ms/tick) | Avg wait (ticks) | Congestion | Collisions | Success |
+| -----: | -------------------: | -----------------: | ---------------: | ---------: | ---------: | ------: |
+| 2 | 1.0 | 0.75 | 17.6 | 0% | 0 | 100% |
+| 4 | 1.3 | 2.19 | 23.2 | 0% | 0 | 100% |
+| 6 | 3.3 | 3.47 | 25.5 | 28% | 0 | 100% |
+| 8 | 3.0 | 4.96 | 36.5 | 25% | 0 | 100% |
+| 12 | 4.3 | 8.18 | 66.5 | 44% | 0 | 100% |
+| 16 | 4.7 | 12.52 | 101.5 | 46% | 0 | 100% |
+
+**factory** — 3 floors, 30×22, 3 elevators (cap 3):
+
+| Agents | Throughput (del/min) | Planning (ms/tick) | Avg wait (ticks) | Congestion | Collisions | Success |
+| -----: | -------------------: | -----------------: | ---------------: | ---------: | ---------: | ------: |
+| 2 | 1.3 | 1.49 | 5.5 | 17% | 0 | 100% |
+| 4 | 1.0 | 3.38 | 9.0 | 0% | 0 | 100% |
+| 6 | 3.3 | 5.65 | 8.9 | 11% | 0 | 100% |
+| 8 | 3.7 | 7.33 | 10.0 | 4% | 0 | 100% |
+| 12 | 7.0 | 11.11 | 10.8 | 22% | 0 | 100% |
+| 16 | 9.3 | 19.15 | 12.5 | 2% | 0 | 100% |
+
+**warehouse** — 2 floors, 36×26, 2 elevators (cap 3):
+
+| Agents | Throughput (del/min) | Planning (ms/tick) | Avg wait (ticks) | Congestion | Collisions | Success |
+| -----: | -------------------: | -----------------: | ---------------: | ---------: | ---------: | ------: |
+| 2 | 1.3 | 2.14 | 4.3 | 0% | 0 | 100% |
+| 4 | 3.7 | 4.47 | 3.1 | 0% | 0 | 100% |
+| 6 | 3.3 | 7.05 | 3.0 | 6% | 0 | 100% |
+| 8 | 3.0 | 11.59 | 46.7 | 50% | 0 | 100% |
+| 12 | 6.3 | 14.19 | 13.3 | 0% | 0 | 100% |
+| 16 | 7.0 | 21.50 | 24.0 | 25% | 0 | 100% |
+
+**Prioritized WHCA\* vs optimal CBS** (factory, 2 seeds × 200 ticks):
+
+| Agents | Planner | Throughput (del/min) | Planning (ms/tick) | Avg wait (ticks) | Congestion |
+| -----: | ------- | -------------------: | -----------------: | ---------------: | ---------: |
+| 4 | prioritized | 1.5 | 4.11 | 10.5 | 0% |
+| 4 | cbs | 1.5 | 5.39 | 10.5 | 0% |
+| 8 | prioritized | 5.0 | 10.02 | 10.5 | 25% |
+| 8 | cbs | 5.0 | 34.85 | 10.4 | 25% |
+| 12 | prioritized | 6.5 | 13.50 | 13.9 | 13% |
+| 12 | cbs | 6.5 | 123.82 | 14.1 | 13% |
+
+**What the numbers show**
+
+- **Collision-free at scale.** Across all 66 runs — over **21,000 simulated
+  ticks** — the per-tick check found **zero** collisions and every run stayed
+  live, promoting the unit-test invariant to a seed-swept, multi-scenario result.
+- **Throughput saturates, and the shape names the bottleneck.** The tall
+  apartment (6 floors / 2 small elevators) plateaus near ~4.7 del/min while its
+  average wait climbs from 18 to 102 ticks — robots queue for the lift, exactly
+  the elevator-capacity regime the [fleet-size optimizer](#fleet-size-optimizer)
+  predicts. The flatter factory and warehouse keep scaling (factory reaches 9.3
+  del/min at 16 agents).
+- **Planning stays real-time.** Prioritized WHCA\* costs sub-millisecond to
+  ~20 ms/tick up to 16 agents, growing roughly linearly-to-super-linearly with
+  fleet size (each added agent both plans and is planned around).
+- **The classic MAPF trade-off, measured.** On these loosely-coupled floors the
+  prioritized planner is already near-optimal, so optimal **CBS matches its
+  throughput and wait but costs up to ~9× the compute** (factory, 12 agents:
+  13.5 vs 123.8 ms/tick — and a single hard seed pushed CBS past 200 ms/tick).
+  CBS earns its keep only on tightly-coupled instances; that is why it ships as
+  an *option* with a node-budget fallback, not the default.
+
+> Numbers are from `node v20.11.0` on an Apple M2, executing the TypeScript
+> engine directly via `vite-node` (a production bundle runs faster); the
+> machine-independent story is the *shape* of each curve and the
+> prioritized-vs-CBS ratio. Full per-seed data is in `docs/benchmark.json`.
+
+---
+
 ## Exploring the simulation
 
 - **Click a robot** to select it: a halo marks it, its planned path is drawn, and

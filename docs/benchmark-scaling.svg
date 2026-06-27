@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="320" viewBox="0 0 760 320" font-family="-apple-system,Segoe UI,Roboto,sans-serif">
+<rect width="760" height="320" fill="#ffffff"/>
+<text x="188" y="33" text-anchor="middle" font-size="13" font-weight="600" fill="#1f2937">Throughput vs fleet size</text>
+<line x1="54" y1="240" x2="356" y2="240" stroke="#e5e7eb" stroke-width="1"/>
+<text x="48" y="243" text-anchor="end" font-size="9" fill="#6b7280">0.0</text>
+<line x1="54" y1="190.5" x2="356" y2="190.5" stroke="#e5e7eb" stroke-width="1"/>
+<text x="48" y="193.5" text-anchor="end" font-size="9" fill="#6b7280">2.6</text>
+<line x1="54" y1="141" x2="356" y2="141" stroke="#e5e7eb" stroke-width="1"/>
+<text x="48" y="144" text-anchor="end" font-size="9" fill="#6b7280">5.1</text>
+<line x1="54" y1="91.5" x2="356" y2="91.5" stroke="#e5e7eb" stroke-width="1"/>
+<text x="48" y="94.5" text-anchor="end" font-size="9" fill="#6b7280">7.7</text>
+<line x1="54" y1="42" x2="356" y2="42" stroke="#e5e7eb" stroke-width="1"/>
+<text x="48" y="45" text-anchor="end" font-size="9" fill="#6b7280">10</text>
+<text x="54" y="254" text-anchor="middle" font-size="9" fill="#6b7280">2</text>
+<text x="97.14285714285714" y="254" text-anchor="middle" font-size="9" fill="#6b7280">4</text>
+<text x="140.28571428571428" y="254" text-anchor="middle" font-size="9" fill="#6b7280">6</text>
+<text x="183.42857142857142" y="254" text-anchor="middle" font-size="9" fill="#6b7280">8</text>
+<text x="269.7142857142857" y="254" text-anchor="middle" font-size="9" fill="#6b7280">12</text>
+<text x="356" y="254" text-anchor="middle" font-size="9" fill="#6b7280">16</text>
+<text x="205" y="266" text-anchor="middle" font-size="10" fill="#374151">agents</text>
+<text x="19" y="141" text-anchor="middle" font-size="10" fill="#374151" transform="rotate(-90 19 141)">deliveries / min</text>
+<line x1="54" y1="42" x2="54" y2="240" stroke="#9ca3af" stroke-width="1"/>
+<line x1="54" y1="240" x2="356" y2="240" stroke="#9ca3af" stroke-width="1"/>
+<path d="M54.0,220.7 L97.1,214.3 L140.3,175.7 L183.4,182.1 L269.7,156.4 L356.0,150.0" fill="none" stroke="#2563eb" stroke-width="2"/>
+<circle cx="54.0" cy="220.7" r="2.5" fill="#2563eb"/>
+<circle cx="97.1" cy="214.3" r="2.5" fill="#2563eb"/>
+<circle cx="140.3" cy="175.7" r="2.5" fill="#2563eb"/>
+<circle cx="183.4" cy="182.1" r="2.5" fill="#2563eb"/>
+<circle cx="269.7" cy="156.4" r="2.5" fill="#2563eb"/>
+<circle cx="356.0" cy="150.0" r="2.5" fill="#2563eb"/>
+<path d="M54.0,214.3 L97.1,220.7 L140.3,175.7 L183.4,169.3 L269.7,105.0 L356.0,60.0" fill="none" stroke="#dc2626" stroke-width="2"/>
+<circle cx="54.0" cy="214.3" r="2.5" fill="#dc2626"/>
+<circle cx="97.1" cy="220.7" r="2.5" fill="#dc2626"/>
+<circle cx="140.3" cy="175.7" r="2.5" fill="#dc2626"/>
+<circle cx="183.4" cy="169.3" r="2.5" fill="#dc2626"/>
+<circle cx="269.7" cy="105.0" r="2.5" fill="#dc2626"/>
+<circle cx="356.0" cy="60.0" r="2.5" fill="#dc2626"/>
+<path d="M54.0,214.3 L97.1,169.3 L140.3,175.7 L183.4,182.1 L269.7,117.9 L356.0,105.0" fill="none" stroke="#059669" stroke-width="2"/>
+<circle cx="54.0" cy="214.3" r="2.5" fill="#059669"/>
+<circle cx="97.1" cy="169.3" r="2.5" fill="#059669"/>
+<circle cx="140.3" cy="175.7" r="2.5" fill="#059669"/>
+<circle cx="183.4" cy="182.1" r="2.5" fill="#059669"/>
+<circle cx="269.7" cy="117.9" r="2.5" fill="#059669"/>
+<circle cx="356.0" cy="105.0" r="2.5" fill="#059669"/>
+<text x="564" y="33" text-anchor="middle" font-size="13" font-weight="600" fill="#1f2937">Planning latency vs fleet size</text>
+<line x1="430" y1="240" x2="732" y2="240" stroke="#e5e7eb" stroke-width="1"/>
+<text x="424" y="243" text-anchor="end" font-size="9" fill="#6b7280">0.0</text>
+<line x1="430" y1="190.5" x2="732" y2="190.5" stroke="#e5e7eb" stroke-width="1"/>
+<text x="424" y="193.5" text-anchor="end" font-size="9" fill="#6b7280">5.9</text>
+<line x1="430" y1="141" x2="732" y2="141" stroke="#e5e7eb" stroke-width="1"/>
+<text x="424" y="144" text-anchor="end" font-size="9" fill="#6b7280">12</text>
+<line x1="430" y1="91.49999999999997" x2="732" y2="91.49999999999997" stroke="#e5e7eb" stroke-width="1"/>
+<text x="424" y="94.49999999999997" text-anchor="end" font-size="9" fill="#6b7280">18</text>
+<line x1="430" y1="42" x2="732" y2="42" stroke="#e5e7eb" stroke-width="1"/>
+<text x="424" y="45" text-anchor="end" font-size="9" fill="#6b7280">24</text>
+<text x="430" y="254" text-anchor="middle" font-size="9" fill="#6b7280">2</text>
+<text x="473.1428571428571" y="254" text-anchor="middle" font-size="9" fill="#6b7280">4</text>
+<text x="516.2857142857142" y="254" text-anchor="middle" font-size="9" fill="#6b7280">6</text>
+<text x="559.4285714285714" y="254" text-anchor="middle" font-size="9" fill="#6b7280">8</text>
+<text x="645.7142857142858" y="254" text-anchor="middle" font-size="9" fill="#6b7280">12</text>
+<text x="732" y="254" text-anchor="middle" font-size="9" fill="#6b7280">16</text>
+<text x="581" y="266" text-anchor="middle" font-size="10" fill="#374151">agents</text>
+<text x="395" y="141" text-anchor="middle" font-size="10" fill="#374151" transform="rotate(-90 395 141)">ms / tick</text>
+<line x1="430" y1="42" x2="430" y2="240" stroke="#9ca3af" stroke-width="1"/>
+<line x1="430" y1="240" x2="732" y2="240" stroke="#9ca3af" stroke-width="1"/>
+<path d="M430.0,233.8 L473.1,221.7 L516.3,210.9 L559.4,198.5 L645.7,171.5 L732.0,135.2" fill="none" stroke="#2563eb" stroke-width="2"/>
+<circle cx="430.0" cy="233.8" r="2.5" fill="#2563eb"/>
+<circle cx="473.1" cy="221.7" r="2.5" fill="#2563eb"/>
+<circle cx="516.3" cy="210.9" r="2.5" fill="#2563eb"/>
+<circle cx="559.4" cy="198.5" r="2.5" fill="#2563eb"/>
+<circle cx="645.7" cy="171.5" r="2.5" fill="#2563eb"/>
+<circle cx="732.0" cy="135.2" r="2.5" fill="#2563eb"/>
+<path d="M430.0,227.5 L473.1,211.7 L516.3,192.7 L559.4,178.6 L645.7,147.0 L732.0,79.7" fill="none" stroke="#dc2626" stroke-width="2"/>
+<circle cx="430.0" cy="227.5" r="2.5" fill="#dc2626"/>
+<circle cx="473.1" cy="211.7" r="2.5" fill="#dc2626"/>
+<circle cx="516.3" cy="192.7" r="2.5" fill="#dc2626"/>
+<circle cx="559.4" cy="178.6" r="2.5" fill="#dc2626"/>
+<circle cx="645.7" cy="147.0" r="2.5" fill="#dc2626"/>
+<circle cx="732.0" cy="79.7" r="2.5" fill="#dc2626"/>
+<path d="M430.0,222.1 L473.1,202.6 L516.3,181.0 L559.4,143.0 L645.7,121.2 L732.0,60.0" fill="none" stroke="#059669" stroke-width="2"/>
+<circle cx="430.0" cy="222.1" r="2.5" fill="#059669"/>
+<circle cx="473.1" cy="202.6" r="2.5" fill="#059669"/>
+<circle cx="516.3" cy="181.0" r="2.5" fill="#059669"/>
+<circle cx="559.4" cy="143.0" r="2.5" fill="#059669"/>
+<circle cx="645.7" cy="121.2" r="2.5" fill="#059669"/>
+<circle cx="732.0" cy="60.0" r="2.5" fill="#059669"/>
+<rect x="20" y="298" width="11" height="11" rx="2" fill="#2563eb"/>
+<text x="35" y="307" font-size="11" fill="#374151">apartment</text>
+<rect x="105" y="298" width="11" height="11" rx="2" fill="#dc2626"/>
+<text x="120" y="307" font-size="11" fill="#374151">factory</text>
+<rect x="176" y="298" width="11" height="11" rx="2" fill="#059669"/>
+<text x="191" y="307" font-size="11" fill="#374151">warehouse</text>
+</svg>
