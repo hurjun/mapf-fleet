@@ -10,7 +10,8 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "test": "vitest",
-    "test:run": "vitest run"
+    "test:run": "vitest run",
+    "bench": "vite-node scripts/benchmark.ts"
   },
   "dependencies": {
     "@react-three/drei": "9.114.3",
