@@ -1,6 +1,7 @@
 # MAPF Fleet — Multi-Robot Construction-Site Simulator
 
 [![CI](https://github.com/hurjun/mapf-fleet/actions/workflows/ci.yml/badge.svg)](https://github.com/hurjun/mapf-fleet/actions/workflows/ci.yml)
+[![Live demo](https://img.shields.io/badge/Live%20demo-online-2dd4bf?logo=vercel&logoColor=white)](https://mapf-fleet.vercel.app/)
 
 An interactive, real-time **3D simulation of a multi-robot fleet** working a
 multi-floor construction site. Dozens of robots move materials between floors
@@ -20,21 +21,39 @@ multi-agent path-finding (MAPF) engine.
 > path overlaid (<kbd>P</kbd>). Regenerate with
 > [`scripts/record-gif.mjs`](scripts/record-gif.mjs). Static stills below.*
 
-![Preview of the simulator](docs/preview.png)
+![The full MAPF Fleet interface — a controls panel on the left, a clearly-stacked ten-floor apartment tower being orbited in the centre, and live metrics, the fleet-size optimizer, and trend charts on the right](docs/interface.png)
 
-![The fleet at work with UI panels hidden — a six-floor tower of robots, lit elevator shafts, accumulating installs, and every robot's planned path overlaid](docs/demo.png)
+> *Above: the complete interface, captured live from the running app. **Left** —
+> configure the site, fleet, planner, and speed, all adjustable while the
+> simulation runs. **Centre** — a legible, clearly-stacked tower (here a 10-floor
+> apartment) you can orbit, pan, and zoom. **Right** — live metrics, the
+> fleet-size optimizer with its model-vs-measured throughput curve, live trend
+> charts, and a one-click prioritized-vs-CBS benchmark.*
 
-> *Above: the same simulator with the panels hidden (press <kbd>U</kbd>) and every
-> robot's planned path overlaid (press <kbd>P</kbd>) — robots ferry material up a
-> six-floor tower while installed structure accumulates per floor. This is a real
-> frame captured from the running app in headless Chromium; regenerate it with
-> [`scripts/screenshot.mjs`](scripts/screenshot.mjs).*
-
-> **Run it locally in about a minute** — see [Running locally](#running-locally).
-> It is a zero-config Next.js app, so it can also be one-click deployed to Vercel
-> ([Deployment](#deployment-vercel)). ·
+> **▶ Try the live demo: [mapf-fleet.vercel.app](https://mapf-fleet.vercel.app/)** —
+> the real app running in your browser, no install. Prefer local? **Run it in about
+> a minute** — see [Running locally](#running-locally). It is a zero-config Next.js
+> app, so you can also one-click deploy your own ([Deployment](#deployment-vercel)). ·
 > **Tip:** drag to orbit the building, then use the sliders to reshape the site
 > and the fleet in real time.
+
+---
+
+## Three sites, one engine
+
+The same framework-free MAPF engine drives three procedurally-generated site
+types — switch between them live from the **Site** tabs, no restart required.
+
+<table>
+<tr>
+<td width="33%" valign="top"><img src="docs/site-apartment.png" alt="Apartment — a tall multi-floor tower where every job crosses floors"><br><b>Apartment</b><br>A tall high-rise: every job crosses floors, so the capacity-limited elevators become the bottleneck.</td>
+<td width="33%" valign="top"><img src="docs/site-factory.png" alt="Factory — a wide, low multi-floor hall served by a gantry crane"><br><b>Factory</b><br>A wide, low multi-floor hall under a gantry crane — traffic spreads across the floor.</td>
+<td width="33%" valign="top"><img src="docs/site-warehouse.png" alt="Warehouse — wide storage aisles feeding shipping docks on two floors"><br><b>Warehouse</b><br>Dense storage aisles feeding shipping docks on a two-floor footprint.</td>
+</tr>
+</table>
+
+> *Real frames from the running app, UI panels hidden. Regenerate with
+> [`scripts/screenshot-sites.mjs`](scripts/screenshot-sites.mjs).*
 
 ---
 
@@ -59,10 +78,14 @@ multi-agent path-finding (MAPF) engine.
   to a free charger when low, recharge, and resume — a real capacity-limited
   scheduling constraint, shown with per-robot battery bars.
 - **Reads like a construction site.** Floors are clearly stacked, outlined decks
-  tied together by a steel frame with floor labels; a tower crane (apartment) or
-  gantry crane (factory/warehouse) looms over staged material pallets; elevator
-  cars travel lit shafts; and **installed structure visibly accumulates** at each
-  delivery point as the fleet builds the site out.
+  tied together by a steel frame with floor labels; every level is dressed with a
+  **variety of obstacles** — concrete pillars, machinery, racks, scaffolding,
+  hazard barriers, and pallets of staged flooring — that the fleet **carefully
+  weaves around**. Robots ferry **bundles of engineered-wood flooring planks
+  (강마루)**, and the **installed flooring visibly accumulates** tile by tile at
+  each delivery point as the site gets laid out. A tower crane (apartment) or
+  gantry crane (factory/warehouse) looms over the staged material; elevator cars
+  travel lit shafts.
 - **Live fleet-size optimizer with model-vs-reality overlay.** An analytical
   throughput model — derived from the *actual* generated layout — predicts
   deliveries/minute vs. fleet size, recommends a deployment, and names the
@@ -91,8 +114,13 @@ reactive layer on top of it.
 ### World model
 
 The site is a stack of 2D grids — one per floor — connected by elevators. Each
-cell is free space, a wall (structure/machinery/shaft), or an elevator
-boarding/exit pad. Pickup and dropoff stations sit on walkable cells. The two
+cell is free space, a wall, or an elevator boarding/exit pad. Walls cover both
+the permanent structure and a deterministic scatter of **site obstacles**
+(pillars, machinery, racks, scaffolding, barriers, pallets, crates); each carries
+a render-only *kind* tag that drives its 3D prop, but to the planner they are all
+the same impassable cell — which is exactly why robots are seen carefully weaving
+around them. A connectivity guard guarantees the scatter never walls off a
+station or pad. Pickup and dropoff stations sit on walkable cells. The three
 scenarios are produced procedurally by `scenarios.ts`.
 
 ### Path finding (the MAPF core)
@@ -197,7 +225,8 @@ A deliberately honest scope, so the engineering claims are easy to verify.
 - Task assignment is **greedy under uniform demand** — no deadlines or priorities.
 - The optimizer's traffic constants (jam density, min speed) are **hand-tuned,
   not calibrated** from data (auto-calibration is an extension).
-- No **hosted demo** yet; run locally, or one-click deploy to Vercel.
+- A **hosted demo** is live at [mapf-fleet.vercel.app](https://mapf-fleet.vercel.app/);
+  you can also run it locally or one-click deploy your own.
 
 ---
 
@@ -292,6 +321,13 @@ prioritized WHCA\* planner. *Planning* is the mean wall-clock time per tick;
 
 ## Exploring the simulation
 
+![Panels hidden and every robot's planned path overlaid — the prioritized planner coordinating a six-floor tower of robots at once](docs/demo.png)
+
+> *Panels hidden (<kbd>U</kbd>) with every robot's planned path overlaid
+> (<kbd>P</kbd>) — the planner coordinating the whole fleet at once. A real frame
+> from the running app; regenerate with
+> [`scripts/screenshot.mjs`](scripts/screenshot.mjs).*
+
 - **Click a robot** to select it: a halo marks it, its planned path is drawn, and
   an inspector shows its live status, battery, task, and plan.
 - **Show all planned paths** to see the whole fleet's coordinated plans at once.
@@ -369,8 +405,10 @@ npm run test:run
 
 ## Deployment (Vercel)
 
+A live instance is deployed at **[mapf-fleet.vercel.app](https://mapf-fleet.vercel.app/)**.
+
 The project is a standard Next.js app and deploys to Vercel with zero
-configuration:
+configuration, so you can spin up your own in a minute:
 
 1. Push this repository to GitHub.
 2. Import it at [vercel.com/new](https://vercel.com/new) — Vercel auto-detects
