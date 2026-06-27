@@ -13,6 +13,14 @@ multi-agent path-finding (MAPF) engine.
 
 ![Preview of the simulator](docs/preview.png)
 
+![The fleet at work with UI panels hidden — a six-floor tower of robots, lit elevator shafts, accumulating installs, and every robot's planned path overlaid](docs/demo.png)
+
+> *Above: the same simulator with the panels hidden (press <kbd>U</kbd>) and every
+> robot's planned path overlaid (press <kbd>P</kbd>) — robots ferry material up a
+> six-floor tower while installed structure accumulates per floor. This is a real
+> frame captured from the running app in headless Chromium; regenerate it with
+> [`scripts/screenshot.mjs`](scripts/screenshot.mjs).*
+
 > **Run it locally in about a minute** — see [Running locally](#running-locally).
 > It is a zero-config Next.js app, so it can also be one-click deployed to Vercel
 > ([Deployment](#deployment-vercel)). ·
