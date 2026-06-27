@@ -11,6 +11,15 @@ recommends the **optimal fleet size** for any building you configure.
 Built with Next.js, React Three Fiber, and a from-scratch TypeScript
 multi-agent path-finding (MAPF) engine.
 
+![Animated demo of the fleet planning collision-free paths and ferrying material up a six-floor tower, with every robot's planned route overlaid](docs/fleet.gif)
+
+> *Above: a ~6-second loop recorded from the **actually-running** app in headless
+> Chromium (SwiftShader WebGL) — robots plan collision-free paths, yield in tight
+> spots, and queue for the capacity-limited elevators while installed structure
+> accumulates per floor. UI panels hidden (<kbd>U</kbd>) and every robot's planned
+> path overlaid (<kbd>P</kbd>). Regenerate with
+> [`scripts/record-gif.mjs`](scripts/record-gif.mjs). Static stills below.*
+
 ![Preview of the simulator](docs/preview.png)
 
 ![The fleet at work with UI panels hidden — a six-floor tower of robots, lit elevator shafts, accumulating installs, and every robot's planned path overlaid](docs/demo.png)
