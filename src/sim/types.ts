@@ -18,6 +18,32 @@ export enum Cell {
   ElevatorOut = 3,
 }
 
+/**
+ * Visual classification of a `Cell.Wall`, used only by the 3D renderer to draw a
+ * variety of obstacles (structural columns, machinery, racks, staged pallets,
+ * safety barriers, scaffolding, debris). Path-finding is unaffected: every kind
+ * is the same impassable wall to the planner, which is why robots are seen
+ * carefully weaving around all of them.
+ */
+export enum Obstacle {
+  /** Not an obstacle (free cell / pad), or an untagged wall. */
+  None = 0,
+  /** Structural column (apartment high-rise frame). */
+  Pillar = 1,
+  /** Machinery footprint (factory). */
+  Machine = 2,
+  /** Storage rack (warehouse). */
+  Rack = 3,
+  /** Staged material pallet — bundles of flooring waiting to be installed. */
+  Pallet = 4,
+  /** Hazard-striped safety barrier cordoning off a work area. */
+  Barrier = 5,
+  /** Scaffolding tower. */
+  Scaffold = 6,
+  /** Loose material crate / debris pile. */
+  Crate = 7,
+}
+
 /** A coordinate within a single floor grid. */
 export interface Coord {
   x: number;
@@ -36,6 +62,12 @@ export interface FloorGrid {
   height: number;
   /** Row-major Cell values, length = width * height. */
   cells: Uint8Array;
+  /**
+   * Row-major {@link Obstacle} kind for each cell, parallel to `cells` (0 =
+   * none). Render-only metadata; the planner never reads it. Optional so the
+   * many hand-built grids in the unit tests need not supply it.
+   */
+  obstacles?: Uint8Array;
 }
 
 export type StationRole = 'pickup' | 'dropoff' | 'charger';

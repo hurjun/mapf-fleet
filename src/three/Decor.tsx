@@ -51,11 +51,11 @@ function MaterialYard({ W, D }: { W: number; D: number }) {
             <boxGeometry args={[1, 0.12, 0.9]} />
             <meshStandardMaterial color={WOOD} roughness={0.9} />
           </mesh>
-          {/* Stacked material crates. */}
-          {Array.from({ length: heights[i] }).map((_, k) => (
-            <mesh key={k} position={[0, 0.32 + k * 0.42, 0]} castShadow>
-              <boxGeometry args={[0.78, 0.4, 0.7]} />
-              <meshStandardMaterial color={MAT} roughness={0.75} />
+          {/* Stacked bundles of 강마루 (engineered-wood) flooring planks. */}
+          {Array.from({ length: heights[i] * 2 }).map((_, k) => (
+            <mesh key={k} position={[0, 0.2 + k * 0.17, 0]} castShadow>
+              <boxGeometry args={[0.86, 0.14, 0.74]} />
+              <meshStandardMaterial color={k % 2 ? '#caa06a' : MAT} roughness={0.78} />
             </mesh>
           ))}
         </group>

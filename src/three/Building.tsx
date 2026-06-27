@@ -15,14 +15,45 @@
 import { useMemo } from 'react';
 import { Edges, Html, Instance, Instances } from '@react-three/drei';
 import { useSim } from '@/state/store';
-import { Cell, World } from '@/sim/types';
+import { Cell, Obstacle, World } from '@/sim/types';
 import { CELL, COLORS, FLOOR_GAP, floorHeight, toScene } from './constants';
 
 type Vec3 = [number, number, number];
 
+/**
+ * How each obstacle kind is drawn — a distinct silhouette and colour per kind so
+ * the floors read as a busy site: slim concrete pillars, chunky machinery, tall
+ * steel racks and scaffolds, low wood pallets of staged flooring, bright hazard
+ * barriers, and loose crates. The box height also sets how each prop sits on the
+ * deck (see `deckYOffset`).
+ */
+interface ObstacleSpec {
+  kind: Obstacle;
+  args: Vec3;
+  color: string;
+  emissive?: boolean;
+}
+
+const OBSTACLE_SPECS: ObstacleSpec[] = [
+  { kind: Obstacle.Pillar, args: [0.42, 1.5, 0.42], color: '#5b6b86' },
+  { kind: Obstacle.Machine, args: [0.86, 0.95, 0.86], color: '#3b485f' },
+  { kind: Obstacle.Rack, args: [0.82, 1.25, 0.82], color: '#46566f' },
+  { kind: Obstacle.Pallet, args: [0.82, 0.42, 0.82], color: '#b07a44' },
+  { kind: Obstacle.Barrier, args: [0.86, 0.5, 0.34], color: '#e0a82e', emissive: true },
+  { kind: Obstacle.Scaffold, args: [0.72, 1.7, 0.72], color: '#8a99b5' },
+  { kind: Obstacle.Crate, args: [0.6, 0.55, 0.6], color: '#a9763f' },
+];
+const SPEC_BY_KIND = new Map(OBSTACLE_SPECS.map((s) => [s.kind, s]));
+
+/** Centre height that rests a box of the given height on the deck surface. */
+function deckYOffset(boxHeight: number): number {
+  return boxHeight / 2 - 0.1;
+}
+
 interface FloorGeometry {
   floor: number;
-  structures: Vec3[];
+  /** Obstacle positions grouped by kind, so each renders with its own mesh. */
+  obstacles: Record<number, Vec3[]>;
   pickups: Vec3[];
   dropoffs: Vec3[];
   chargers: Vec3[];
@@ -103,7 +134,15 @@ export function Building({ world }: { world: World }) {
             </Html>
 
             <group visible={focused}>
-              <InstanceGroup positions={f.structures} args={[0.5, 1.3, 0.5]} color={COLORS.column} />
+              {OBSTACLE_SPECS.map((spec) => (
+                <InstanceGroup
+                  key={spec.kind}
+                  positions={f.obstacles[spec.kind] ?? []}
+                  args={spec.args}
+                  color={spec.color}
+                  emissive={spec.emissive}
+                />
+              ))}
               <InstanceGroup positions={f.pickups} args={[0.78, 0.12, 0.78]} color={COLORS.pickup} emissive />
               <InstanceGroup positions={f.dropoffs} args={[0.78, 0.12, 0.78]} color={COLORS.dropoff} emissive />
               <InstanceGroup positions={f.chargers} args={[0.78, 0.14, 0.78]} color={COLORS.charger} emissive />
@@ -157,9 +196,11 @@ function buildGeometry(world: World): FloorGeometry[] {
 
   const byFloor = new Map<number, FloorGeometry>();
   for (const g of world.floors) {
+    const obstacles: Record<number, Vec3[]> = {};
+    for (const spec of OBSTACLE_SPECS) obstacles[spec.kind] = [];
     byFloor.set(g.floor, {
       floor: g.floor,
-      structures: [],
+      obstacles,
       pickups: [],
       dropoffs: [],
       chargers: [],
@@ -172,9 +213,14 @@ function buildGeometry(world: World): FloorGeometry[] {
     const f = byFloor.get(g.floor)!;
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
-        if (g.cells[y * width + x] !== Cell.Wall) continue;
+        const i = y * width + x;
+        if (g.cells[i] !== Cell.Wall) continue;
         if (shaft.has(`${x}|${y}`)) continue;
-        f.structures.push(toScene(x, y, floorHeight(g.floor) + 0.55, width, height));
+        // Tagged kind drives the mesh; an untagged wall falls back to a column.
+        let kind = (g.obstacles ? (g.obstacles[i] as Obstacle) : Obstacle.None) || Obstacle.Pillar;
+        if (!SPEC_BY_KIND.has(kind)) kind = Obstacle.Pillar;
+        const yOff = deckYOffset(SPEC_BY_KIND.get(kind)!.args[1]);
+        f.obstacles[kind].push(toScene(x, y, floorHeight(g.floor) + yOff, width, height));
       }
     }
   }

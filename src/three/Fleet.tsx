@@ -11,7 +11,7 @@
  *   - drives a state-colored status beacon/panel (green = to pickup, blue =
  *     carrying, amber = yielding, orange = waiting for a lift, …) so what each
  *     robot is doing is obvious at a glance,
- *   - and shows a crate while it is carrying material.
+ *   - and shows a bundle of flooring planks (강마루) while it is carrying.
  *
  * The four kinds get distinct, detailed silhouettes — a counter-balance
  * forklift, a flat AMR cart, a scissor lifter, and a small sensor scout — built
@@ -30,7 +30,8 @@ const BODY = '#3a4453'; // neutral industrial chassis
 const DARK = '#1c222c'; // tires, frames, sensors
 const METAL = '#9aa6b6'; // forks, hubs
 const HEADLIGHT = '#fff6d8';
-const CRATE = '#c08a52';
+/** Engineered-wood (강마루) plank tones for the carried flooring bundle. */
+const PLANK = ['#c8975a', '#b07a44', '#d9a566'];
 
 /** Look up a robot's current snapshot by id (cheap at this fleet size). */
 function findRobot(id: number): RobotSnapshot | undefined {
@@ -52,7 +53,7 @@ export function Fleet() {
 
 const RobotMesh = memo(function RobotMesh({ id, kind }: { id: number; kind: RobotKind }) {
   const group = useRef<THREE.Group>(null);
-  const crate = useRef<THREE.Mesh>(null);
+  const crate = useRef<THREE.Group>(null);
   const battery = useRef<THREE.Mesh>(null);
   const halo = useRef<THREE.Mesh>(null);
 
@@ -157,11 +158,31 @@ const RobotMesh = memo(function RobotMesh({ id, kind }: { id: number; kind: Robo
       </mesh>
       <group scale={1.6}>
         <RobotBody kind={kind} accent={accent} />
-        {/* Carried material: a chunky, lit crate so "carrying" is unmistakable. */}
-        <mesh ref={crate} position={[0, 0.72, 0]} visible={false} castShadow>
-          <boxGeometry args={[0.46, 0.4, 0.46]} />
-          <meshStandardMaterial color={CRATE} emissive={CRATE} emissiveIntensity={0.25} roughness={0.7} />
-        </mesh>
+        {/* Carried payload: a strapped bundle of 강마루 (engineered-wood)
+            flooring planks, so what the fleet hauls is unmistakable. */}
+        <group ref={crate} position={[0, 0.58, 0]} visible={false}>
+          {[0, 1, 2].map((k) => (
+            <mesh key={k} position={[0, k * 0.09, 0]} castShadow>
+              <boxGeometry args={[0.5, 0.075, 0.64]} />
+              <meshStandardMaterial
+                color={PLANK[k % PLANK.length]}
+                emissive={PLANK[k % PLANK.length]}
+                emissiveIntensity={0.12}
+                roughness={0.6}
+                metalness={0.05}
+              />
+            </mesh>
+          ))}
+          {/* Dark binding straps wrapping the bundle. */}
+          <mesh position={[0, 0.09, 0.16]}>
+            <boxGeometry args={[0.54, 0.26, 0.04]} />
+            <meshStandardMaterial color={DARK} roughness={0.8} />
+          </mesh>
+          <mesh position={[0, 0.09, -0.16]}>
+            <boxGeometry args={[0.54, 0.26, 0.04]} />
+            <meshStandardMaterial color={DARK} roughness={0.8} />
+          </mesh>
+        </group>
         {/* Battery indicator floating above the robot. */}
         <mesh position={[0, 0.92, 0]}>
           <boxGeometry args={[0.36, 0.06, 0.06]} />

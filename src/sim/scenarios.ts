@@ -10,8 +10,8 @@
  * Both share the same engine; only the layout, station mix, and defaults differ.
  */
 
-import { idx } from './grid';
-import { Cell, Elevator, FloorGrid, ScenarioId, Station, World } from './types';
+import { DIRS, idx } from './grid';
+import { Cell, Elevator, FloorGrid, Obstacle, ScenarioId, Station, World } from './types';
 
 export interface ScenarioParams {
   scenario: ScenarioId;
@@ -71,7 +71,13 @@ export function buildWorld(p: ScenarioParams): World {
   const { numFloors, width, height } = p;
   const floors: FloorGrid[] = [];
   for (let f = 0; f < numFloors; f++) {
-    floors.push({ floor: f, width, height, cells: new Uint8Array(width * height) });
+    floors.push({
+      floor: f,
+      width,
+      height,
+      cells: new Uint8Array(width * height),
+      obstacles: new Uint8Array(width * height),
+    });
   }
 
   if (p.scenario === 'apartment') addColumns(floors, 6, 5);
@@ -88,19 +94,35 @@ export function buildWorld(p: ScenarioParams): World {
   const stations = base.concat(addChargers(floors, base.length));
 
   // Make sure every station sits on a clear, walkable cell.
-  for (const s of stations) floors[s.floor].cells[idx(s.x, s.y, width)] = Cell.Free;
+  for (const s of stations) {
+    const i = idx(s.x, s.y, width);
+    floors[s.floor].cells[i] = Cell.Free;
+    floors[s.floor].obstacles![i] = Obstacle.None;
+  }
+
+  // Scatter varied site clutter the fleet must weave around — staged flooring
+  // pallets, safety barriers, scaffolding, and crates — keeping every floor
+  // fully connected so all stations and elevator pads stay reachable.
+  addSiteClutter(floors, elevators, stations);
 
   return { scenario: p.scenario, numFloors, width, height, floors, elevators, stations };
 }
 
 // ---- structure ------------------------------------------------------------
 
+/** Mark a cell as an impassable wall and tag its visual obstacle kind. */
+function setWall(g: FloorGrid, x: number, y: number, kind: Obstacle): void {
+  const i = idx(x, y, g.width);
+  g.cells[i] = Cell.Wall;
+  if (g.obstacles) g.obstacles[i] = kind;
+}
+
 /** Regular structural columns the robots must weave around (high-rise look). */
 function addColumns(floors: FloorGrid[], stepX: number, stepY: number): void {
   for (const g of floors) {
     for (let y = 3; y < g.height - 1; y += stepY) {
       for (let x = 2; x < g.width - 1; x += stepX) {
-        g.cells[idx(x, y, g.width)] = Cell.Wall;
+        setWall(g, x, y, Obstacle.Pillar);
       }
     }
   }
@@ -111,8 +133,8 @@ function addMachineBlocks(floors: FloorGrid[], stepX: number, stepY: number): vo
   for (const g of floors) {
     for (let y = 4; y < g.height - 2; y += stepY) {
       for (let x = 3; x < g.width - 3; x += stepX) {
-        g.cells[idx(x, y, g.width)] = Cell.Wall;
-        g.cells[idx(x + 1, y, g.width)] = Cell.Wall;
+        setWall(g, x, y, Obstacle.Machine);
+        setWall(g, x + 1, y, Obstacle.Machine);
       }
     }
   }
@@ -127,7 +149,7 @@ function addRacks(floors: FloorGrid[]): void {
     for (let y = 4; y < g.height - 4; y += 3) {
       for (let x = 3; x < g.width - 3; x++) {
         if (x % 8 === 0) continue; // cross-aisle gap
-        g.cells[idx(x, y, g.width)] = Cell.Wall;
+        setWall(g, x, y, Obstacle.Rack);
       }
     }
   }
@@ -274,4 +296,123 @@ function lattice(
     }
   }
   return out;
+}
+
+// ---- site clutter ---------------------------------------------------------
+
+/**
+ * Mix of loose obstacles scattered on every floor. Pallets are weighted highest
+ * because the fleet's job is hauling flooring — staged bundles read as the work
+ * in progress.
+ */
+const CLUTTER_KINDS: readonly Obstacle[] = [
+  Obstacle.Pallet,
+  Obstacle.Pallet,
+  Obstacle.Crate,
+  Obstacle.Barrier,
+  Obstacle.Scaffold,
+];
+
+/** Fraction of a floor's eligible free cells turned into scattered clutter. */
+const CLUTTER_RATE = 0.05;
+
+/**
+ * Scatter a variety of impassable props across each floor so robots are seen
+ * carefully threading around them. Every prop is a normal `Cell.Wall` to the
+ * planner; only its {@link Obstacle} tag (for the renderer) differs.
+ *
+ * Placement is deterministic (a coordinate hash, no RNG) and guarded: a prop is
+ * only kept if it severs nothing — i.e. the count of cells reachable from a
+ * fixed anchor drops by exactly one — so the floor stays a single connected
+ * region and no station or elevator pad is ever walled off.
+ */
+function addSiteClutter(floors: FloorGrid[], elevators: Elevator[], stations: Station[]): void {
+  if (elevators.length === 0) return;
+  const anchor = elevators[0].inCell;
+
+  for (const g of floors) {
+    const { width, height } = g;
+    const obs = g.obstacles!;
+
+    // Cells to leave clear: stations, elevator pads/shafts, and a one-cell
+    // buffer around each so their approaches never get crowded.
+    const forbidden = new Set<number>();
+    const guard = (cx: number, cy: number) => {
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          const x = cx + dx;
+          const y = cy + dy;
+          if (x >= 0 && y >= 0 && x < width && y < height) forbidden.add(idx(x, y, width));
+        }
+      }
+    };
+    for (const s of stations) if (s.floor === g.floor) guard(s.x, s.y);
+    for (const e of elevators) {
+      guard(e.inCell.x, e.inCell.y);
+      guard(e.outCell.x, e.outCell.y);
+    }
+
+    // Candidate free interior cells (skipping the elevator core band at the top
+    // two rows), ordered by a stable hash for a reproducible scatter.
+    const candidates: Array<{ i: number; x: number; y: number; h: number }> = [];
+    for (let y = 2; y < height - 1; y++) {
+      for (let x = 1; x < width - 1; x++) {
+        const i = idx(x, y, width);
+        if (g.cells[i] !== Cell.Free || forbidden.has(i)) continue;
+        candidates.push({ i, x, y, h: hash3(x, y, g.floor) });
+      }
+    }
+    candidates.sort((a, b) => a.h - b.h);
+
+    const target = Math.round(candidates.length * CLUTTER_RATE);
+    let reachable = floodCount(g, anchor.x, anchor.y);
+    let placed = 0;
+    for (const c of candidates) {
+      if (placed >= target) break;
+      g.cells[c.i] = Cell.Wall;
+      const after = floodCount(g, anchor.x, anchor.y);
+      if (after === reachable - 1) {
+        obs[c.i] = CLUTTER_KINDS[c.h % CLUTTER_KINDS.length];
+        reachable = after;
+        placed++;
+      } else {
+        g.cells[c.i] = Cell.Free; // would sever the floor — revert
+      }
+    }
+  }
+}
+
+/** Number of walkable cells reachable from (sx, sy) on a floor (flood fill). */
+function floodCount(g: FloorGrid, sx: number, sy: number): number {
+  const { width, height, cells } = g;
+  const start = idx(sx, sy, width);
+  if (cells[start] === Cell.Wall) return 0;
+  const seen = new Uint8Array(width * height);
+  const stack = [start];
+  seen[start] = 1;
+  let count = 0;
+  while (stack.length > 0) {
+    const cur = stack.pop()!;
+    count++;
+    const cx = cur % width;
+    const cy = (cur - cx) / width;
+    for (const [dx, dy] of DIRS) {
+      const nx = cx + dx;
+      const ny = cy + dy;
+      if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
+      const ni = idx(nx, ny, width);
+      if (seen[ni] || cells[ni] === Cell.Wall) continue;
+      seen[ni] = 1;
+      stack.push(ni);
+    }
+  }
+  return count;
+}
+
+/** Stable 32-bit hash of a floor cell — a deterministic stand-in for an RNG. */
+function hash3(x: number, y: number, f: number): number {
+  let h = Math.imul(x + 1, 73856093) ^ Math.imul(y + 1, 19349663) ^ Math.imul(f + 1, 83492791);
+  h = Math.imul(h ^ (h >>> 13), 0x5bd1e995);
+  h ^= h >>> 15;
+  return h >>> 0;
 }
