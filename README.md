@@ -1,446 +1,66 @@
-# MAPF Fleet — Multi-Robot Construction-Site Simulator
+# MAPF Fleet — Multi-robot path planning for multi-floor sites, with a 3D simulator
 
 [![CI](https://github.com/hurjun/mapf-fleet/actions/workflows/ci.yml/badge.svg)](https://github.com/hurjun/mapf-fleet/actions/workflows/ci.yml)
 [![Live demo](https://img.shields.io/badge/Live%20demo-online-2dd4bf?logo=vercel&logoColor=white)](https://mapf-fleet.vercel.app/)
 
-An interactive, real-time **3D simulation of a multi-robot fleet** working a
-multi-floor construction site. Dozens of robots move materials between floors
-while planning **collision-free paths**, **yielding** to one another in tight
-spots, and **queueing for capacity-limited elevators** — and a built-in model
-recommends the **optimal fleet size** for any building you configure.
+MAPF Fleet is a from-scratch TypeScript engine for multi-agent path finding (MAPF: many robots, no collisions). It routes a robot fleet across a multi-floor construction site with capacity-limited elevators. A 3D web app shows the fleet live; a headless benchmark stress-tests the same engine across seeds and sites.
 
-Built with Next.js, React Three Fiber, and a from-scratch TypeScript
-multi-agent path-finding (MAPF) engine.
+**Live demo:** [mapf-fleet.vercel.app](https://mapf-fleet.vercel.app/) — orbit, then change site and fleet live.
 
 ![Animated demo of the fleet planning collision-free paths and ferrying material up a six-floor tower, with every robot's planned route overlaid](docs/fleet.gif)
 
-> *Above: a ~6-second loop recorded from the **actually-running** app in headless
-> Chromium (SwiftShader WebGL) — robots plan collision-free paths, yield in tight
-> spots, and queue for the capacity-limited elevators while installed structure
-> accumulates per floor. UI panels hidden (<kbd>U</kbd>) and every robot's planned
-> path overlaid (<kbd>P</kbd>). Regenerate with
-> [`scripts/record-gif.mjs`](scripts/record-gif.mjs). Static stills below.*
+*A ~6-second loop recorded from the running app in headless Chromium ([`scripts/record-gif.mjs`](scripts/record-gif.mjs)).*
 
-![The full MAPF Fleet interface — a controls panel on the left, a clearly-stacked ten-floor apartment tower being orbited in the centre, and live metrics, the fleet-size optimizer, and trend charts on the right](docs/interface.png)
+## Result
 
-> *Above: the complete interface, captured live from the running app. **Left** —
-> configure the site, fleet, planner, and speed, all adjustable while the
-> simulation runs. **Centre** — a legible, clearly-stacked tower (here a 10-floor
-> apartment) you can orbit, pan, and zoom. **Right** — live metrics, the
-> fleet-size optimizer with its model-vs-measured throughput curve, live trend
-> charts, and a one-click prioritized-vs-CBS benchmark.*
+Headless benchmark (`npm run bench`), node v20.11.0, Apple M2, `vite-node`. Full tables: [docs/DETAILS.md](docs/DETAILS.md).
 
-> **▶ Try the live demo: [mapf-fleet.vercel.app](https://mapf-fleet.vercel.app/)** —
-> the real app running in your browser, no install. Prefer local? **Run it in about
-> a minute** — see [Running locally](#running-locally). It is a zero-config Next.js
-> app, so you can also one-click deploy your own ([Deployment](#deployment-vercel)). ·
-> **Tip:** drag to orbit the building, then use the sliders to reshape the site
-> and the fleet in real time.
-
----
-
-## Three sites, one engine
-
-The same framework-free MAPF engine drives three procedurally-generated site
-types — switch between them live from the **Site** tabs, no restart required.
-
-<table>
-<tr>
-<td width="33%" valign="top"><img src="docs/site-apartment.png" alt="Apartment — a tall multi-floor tower where every job crosses floors"><br><b>Apartment</b><br>A tall high-rise: every job crosses floors, so the capacity-limited elevators become the bottleneck.</td>
-<td width="33%" valign="top"><img src="docs/site-factory.png" alt="Factory — a wide, low multi-floor hall served by a gantry crane"><br><b>Factory</b><br>A wide, low multi-floor hall under a gantry crane — traffic spreads across the floor.</td>
-<td width="33%" valign="top"><img src="docs/site-warehouse.png" alt="Warehouse — wide storage aisles feeding shipping docks on two floors"><br><b>Warehouse</b><br>Dense storage aisles feeding shipping docks on a two-floor footprint.</td>
-</tr>
-</table>
-
-> *Real frames from the running app, UI panels hidden. Regenerate with
-> [`scripts/screenshot-sites.mjs`](scripts/screenshot-sites.mjs).*
-
----
-
-## Highlights
-
-- **Real multi-agent path finding.** A prioritized planner runs a *windowed
-  cooperative space-time A\** (WHCA\*) for every robot against a shared
-  reservation table. Collisions and head-on swaps are provably avoided, and
-  yielding/queuing behavior **emerges** from the planner rather than being
-  scripted.
-- **Three switchable sites.** A tall **apartment** high-rise (every job crosses
-  floors, so the elevators dominate), a wide multi-floor **factory**, and a
-  **warehouse** of storage aisles feeding shipping docks — same engine, different
-  layouts.
-- **Two planners, switchable live.** The fast prioritized planner, or
-  **Conflict-Based Search (CBS)** — an optimal MAPF algorithm — toggled from the
-  UI without restarting the run.
-- **Capacity-limited elevators with queues.** Each car runs a LOOK-style
-  scheduler; robots form a visible line at the boarding pad and the car fills to
-  capacity before departing.
-- **Battery & charging stations.** Robots drain a battery as they work, divert
-  to a free charger when low, recharge, and resume — a real capacity-limited
-  scheduling constraint, shown with per-robot battery bars.
-- **Reads like a construction site.** Floors are clearly stacked, outlined decks
-  tied together by a steel frame with floor labels; every level is dressed with a
-  **variety of obstacles** — concrete pillars, machinery, racks, scaffolding,
-  hazard barriers, and pallets of staged flooring — that the fleet **carefully
-  weaves around**. Robots ferry **bundles of engineered-wood flooring planks
-  (강마루)**, and the **installed flooring visibly accumulates** tile by tile at
-  each delivery point as the site gets laid out. A tower crane (apartment) or
-  gantry crane (factory/warehouse) looms over the staged material; elevator cars
-  travel lit shafts.
-- **Live fleet-size optimizer with model-vs-reality overlay.** An analytical
-  throughput model — derived from the *actual* generated layout — predicts
-  deliveries/minute vs. fleet size, recommends a deployment, and names the
-  binding bottleneck. The measured throughput from the running simulation is
-  plotted right on top of the prediction.
-- **Inspect and visualize.** Click any robot for a live inspector and its
-  planned path; toggle all paths to watch the planner coordinate the fleet; read
-  a 2D floor minimap, live trend charts, camera presets, and a single-floor focus
-  mode — with optional bloom for a striking look.
-- **Configure everything live.** Floors, elevator count and capacity, floor
-  size, fleet size, planner, and speed are all adjustable while the simulation
-  runs — robots are added or removed without restarting.
-- **Readable at a glance.** Robots are detailed per-kind models color-coded by
-  state (heading to a pickup, carrying, yielding, waiting for a lift, riding,
-  charging), so what the fleet is doing is always obvious.
-
----
-
-## How it works
-
-The simulation engine (`src/sim/`) is pure, framework-free TypeScript with no
-rendering or DOM dependencies, so it runs identically in unit tests and in the
-browser. The 3D scene and UI (`src/three/`, `src/components/`) are a thin,
-reactive layer on top of it.
-
-### World model
-
-The site is a stack of 2D grids — one per floor — connected by elevators. Each
-cell is free space, a wall, or an elevator boarding/exit pad. Walls cover both
-the permanent structure and a deterministic scatter of **site obstacles**
-(pillars, machinery, racks, scaffolding, barriers, pallets, crates); each carries
-a render-only *kind* tag that drives its 3D prop, but to the planner they are all
-the same impassable cell — which is exactly why robots are seen carefully weaving
-around them. A connectivity guard guarantees the scatter never walls off a
-station or pad. Pickup and dropoff stations sit on walkable cells. The three
-scenarios are produced procedurally by `scenarios.ts`.
-
-### Path finding (the MAPF core)
-
-> A standalone **[ALGORITHMS.md](ALGORITHMS.md)** walks through the `(x, y, t)`
-> state space, the space-time reservation table, WHCA\*, and CBS in depth — with
-> complexity notes, a reproducible worked example, and references.
-
-Robots navigate with a **prioritized, cooperative** scheme:
-
-1. **Single-agent search** — `spaceTimeAStar` plans in the `(x, y, t)`
-   state space over a short time window, treating cells and transitions that
-   higher-priority robots have already reserved as obstacles. If the goal is
-   beyond the window it returns the path to the closest reachable cell so the
-   robot always makes progress (classic WHCA\*).
-2. **Reservation table** — `reservation.ts` records the cells (vertices) and
-   moves (edges) each robot will occupy. Edge keys are order-independent, which
-   is what blocks two robots from swapping places head-on.
-3. **Prioritized planning** — `planner.ts` plans robots in priority order
-   (loaded first, then whoever has waited longest, breaking stand-offs over
-   time). A robot that cannot make progress simply holds position — that is the
-   **yielding** you see. Because only the very next step is ever executed, the
-   planner also reserves each not-yet-planned robot's current cell for the next
-   tick, which **guarantees no two robots ever land on the same cell**.
-
-Alternatively, the **CBS** planner (`cbs.ts`) can be selected at runtime. It is
-a two-level search: a high-level best-first search over a binary *constraint
-tree* finds the first vertex/edge conflict between two agents and branches,
-forbidding one agent from it, while a constrained low-level space-time A\*
-replans just that agent. It runs per floor over the window with a node budget,
-falling back to the prioritized planner if a floor can't be resolved in budget,
-so it stays real-time and never stalls.
-
-### Elevators
-
-`elevator.ts` models each car as a capacity-limited transport running a
-**LOOK scan**: keep moving in the current direction while there is a stop to
-serve ahead (a rider's destination, or a floor with a waiting robot), otherwise
-reverse, otherwise idle. A full car ignores hall calls and heads straight for
-its riders' destinations. The shaft sits *between* the boarding and exit pads so
-the boarding queue can never block an exit — a subtle but important
-deadlock-avoidance detail.
-
-### Battery & charging
-
-Each robot drains a battery as it works (faster while carrying). When it drops
-below a threshold it claims the nearest free charger on its floor, drives there,
-recharges, and resumes. Chargers hold one robot at a time, so charging is a
-genuine scheduling constraint rather than a cosmetic detail. The optimizer folds
-the resulting charging duty cycle into an **availability factor** so its
-prediction stays aligned with the simulation.
-
-### Fleet-size optimizer
-
-`optimize.ts` answers "how many robots should I deploy?" It builds the world to
-measure real free space and the true pickup/dropoff-to-elevator distances (via
-reverse-BFS distance fields), then combines:
-
-- a **floor-congestion** model (a traffic "fundamental diagram": robots slow as
-  density rises), and
-- an **elevator-capacity ceiling** (boardings served per round trip).
-
-Sweeping the fleet size yields the throughput curve; its knee is the
-**recommended** fleet (the smallest one within 95% of the peak), and the binding
-term identifies the **bottleneck**. The full derivation is documented inline. As
-the simulation runs, the measured throughput at each fleet size is recorded and
-drawn as points over the predicted curve — model versus reality, side by side.
-
----
-
-## What's implemented (and what isn't)
-
-A deliberately honest scope, so the engineering claims are easy to verify.
-
-**Genuinely implemented, from scratch:**
-
-- A\* and a **windowed cooperative space-time A\*** (WHCA\*) over `(x, y, t)`.
-- A **space-time reservation table** with order-independent edge keys, which is
-  what provably blocks head-on swaps.
-- A **prioritized planner** whose next-step reservation discipline guarantees no
-  two robots ever land on the same cell.
-- **Conflict-Based Search** (two-level constraint-tree search, vertex *and* edge
-  conflicts, constrained low-level replanning).
-- Capacity-limited **elevators** (LOOK scheduler), **battery/charging** as a real
-  scheduling constraint, and procedural **apartment / factory / warehouse** worlds.
-- An analytical **fleet-size optimizer** validated live against the simulation.
-- A **deterministic, seeded** engine with unit tests asserting the collision-free
-  invariant on every tick.
-
-**Simplifications and non-goals (by design):**
-
-- Robots are **single-cell and uniform-speed** — no heterogeneous footprints or
-  speeds (listed as an extension).
-- CBS runs on a **rolling window with a per-floor node budget** and **falls back
-  to the prioritized planner** when a floor can't be resolved in budget. So its
-  optimality is *per-window, within budget* — it is a real-time planner, not a
-  full offline optimal solver over the whole episode.
-- The prioritized planner alone is **incomplete** (it can deadlock on tightly
-  coupled instances); the engine recovers with a heuristic priority-shuffle, and
-  CBS removes the failure mode. See the worked example in
-  [ALGORITHMS.md](ALGORITHMS.md).
-- Task assignment is **greedy under uniform demand** — no deadlines or priorities.
-- The optimizer's traffic constants (jam density, min speed) are **hand-tuned,
-  not calibrated** from data (auto-calibration is an extension).
-- A **hosted demo** is live at [mapf-fleet.vercel.app](https://mapf-fleet.vercel.app/);
-  you can also run it locally or one-click deploy your own.
-
----
-
-## Performance & scaling
-
-A headless benchmark ([`scripts/benchmark.ts`](scripts/benchmark.ts), driven by
-the pure library in [`src/sim/scaling.ts`](src/sim/scaling.ts)) drives the **real
-engine** — no rendering — across fleet sizes, scenarios, and seeds. For each run
-it times only the per-tick `Engine.step()` call (which is dominated by the
-multi-agent planner), records the delivery throughput and coordination quality
-the planner achieves, and **re-checks the collision-free invariant on every
-tick**. Reproduce it with `npm run bench`; it regenerates the figure below and
-[`docs/benchmark.json`](docs/benchmark.json).
+- **0 collisions** across 66 runs (3 sites × 6 fleet sizes × 3 seeds, plus 12 CBS-comparison runs). Invariant re-checked every tick.
+- 18,600 timed ticks; 21,240 including the collision-checked 40-tick warm-up per run. Every run stayed live.
+- Prioritized WHCA\* plans in 0.75–21.5 ms/tick for 2–16 robots.
+- Optimal CBS gives the same throughput (6.5 deliveries/min, factory, 12 robots) at up to ~9× the cost: 13.5 vs 123.8 ms/tick.
+- The 6-floor apartment plateaus near ~4.7 deliveries/min while average wait climbs from 17.6 to 101.5 ticks: the elevator-capacity regime the fleet-size model predicts.
 
 ![Throughput and planning latency vs fleet size](docs/benchmark-scaling.svg)
 
-Each row below averages **3 seeds × 300 timed ticks** (40-tick warm-up) under the
-prioritized WHCA\* planner. *Planning* is the mean wall-clock time per tick;
-*Success* is the fraction of seeds that stayed collision-free and live.
+**Research link.** A small, reproducible case of simulation-based validation. A safety invariant is checked every tick across seeds. A throughput model is checked against measured data. A known failure mode (planner deadlock) is recovered and counted. I want to extend it to fault diagnosis and failure prediction for real cyber-physical fleets.
 
-**apartment** — 6 floors, 24×18, 2 elevators (cap 2):
+## How it works
 
-| Agents | Throughput (del/min) | Planning (ms/tick) | Avg wait (ticks) | Congestion | Collisions | Success |
-| -----: | -------------------: | -----------------: | ---------------: | ---------: | ---------: | ------: |
-| 2 | 1.0 | 0.75 | 17.6 | 0% | 0 | 100% |
-| 4 | 1.3 | 2.19 | 23.2 | 0% | 0 | 100% |
-| 6 | 3.3 | 3.47 | 25.5 | 28% | 0 | 100% |
-| 8 | 3.0 | 4.96 | 36.5 | 25% | 0 | 100% |
-| 12 | 4.3 | 8.18 | 66.5 | 44% | 0 | 100% |
-| 16 | 4.7 | 12.52 | 101.5 | 46% | 0 | 100% |
+- Each floor is a 2D grid linked by elevators. Obstacles are impassable cells; a connectivity guard keeps every station reachable.
+- Each robot plans with windowed space-time A\* (WHCA\*) against a shared reservation table; order-independent edge keys block head-on swaps.
+- Robots plan in priority order (loaded first, then longest-waiting). A blocked robot holds its cell: that is yielding.
+- Optional CBS (Conflict-Based Search): find the first conflict, branch, replan one robot. Past a per-floor node budget (search-size cap), prioritized planning takes over.
+- Elevators run a LOOK scan (keep direction while stops lie ahead, else reverse) with limited capacity; battery and chargers are real constraints.
+- An analytical fleet-size model (floor congestion + elevator capacity) predicts throughput, overlaid on measured values.
 
-**factory** — 3 floors, 30×22, 3 elevators (cap 3):
-
-| Agents | Throughput (del/min) | Planning (ms/tick) | Avg wait (ticks) | Congestion | Collisions | Success |
-| -----: | -------------------: | -----------------: | ---------------: | ---------: | ---------: | ------: |
-| 2 | 1.3 | 1.49 | 5.5 | 17% | 0 | 100% |
-| 4 | 1.0 | 3.38 | 9.0 | 0% | 0 | 100% |
-| 6 | 3.3 | 5.65 | 8.9 | 11% | 0 | 100% |
-| 8 | 3.7 | 7.33 | 10.0 | 4% | 0 | 100% |
-| 12 | 7.0 | 11.11 | 10.8 | 22% | 0 | 100% |
-| 16 | 9.3 | 19.15 | 12.5 | 2% | 0 | 100% |
-
-**warehouse** — 2 floors, 36×26, 2 elevators (cap 3):
-
-| Agents | Throughput (del/min) | Planning (ms/tick) | Avg wait (ticks) | Congestion | Collisions | Success |
-| -----: | -------------------: | -----------------: | ---------------: | ---------: | ---------: | ------: |
-| 2 | 1.3 | 2.14 | 4.3 | 0% | 0 | 100% |
-| 4 | 3.7 | 4.47 | 3.1 | 0% | 0 | 100% |
-| 6 | 3.3 | 7.05 | 3.0 | 6% | 0 | 100% |
-| 8 | 3.0 | 11.59 | 46.7 | 50% | 0 | 100% |
-| 12 | 6.3 | 14.19 | 13.3 | 0% | 0 | 100% |
-| 16 | 7.0 | 21.50 | 24.0 | 25% | 0 | 100% |
-
-**Prioritized WHCA\* vs optimal CBS** (factory, 2 seeds × 200 ticks):
-
-| Agents | Planner | Throughput (del/min) | Planning (ms/tick) | Avg wait (ticks) | Congestion |
-| -----: | ------- | -------------------: | -----------------: | ---------------: | ---------: |
-| 4 | prioritized | 1.5 | 4.11 | 10.5 | 0% |
-| 4 | cbs | 1.5 | 5.39 | 10.5 | 0% |
-| 8 | prioritized | 5.0 | 10.02 | 10.5 | 25% |
-| 8 | cbs | 5.0 | 34.85 | 10.4 | 25% |
-| 12 | prioritized | 6.5 | 13.50 | 13.9 | 13% |
-| 12 | cbs | 6.5 | 123.82 | 14.1 | 13% |
-
-**What the numbers show**
-
-- **Collision-free at scale.** Across all 66 runs — over **21,000 simulated
-  ticks** — the per-tick check found **zero** collisions and every run stayed
-  live, promoting the unit-test invariant to a seed-swept, multi-scenario result.
-- **Throughput saturates, and the shape names the bottleneck.** The tall
-  apartment (6 floors / 2 small elevators) plateaus near ~4.7 del/min while its
-  average wait climbs from 18 to 102 ticks — robots queue for the lift, exactly
-  the elevator-capacity regime the [fleet-size optimizer](#fleet-size-optimizer)
-  predicts. The flatter factory and warehouse keep scaling (factory reaches 9.3
-  del/min at 16 agents).
-- **Planning stays real-time.** Prioritized WHCA\* costs sub-millisecond to
-  ~20 ms/tick up to 16 agents, growing roughly linearly-to-super-linearly with
-  fleet size (each added agent both plans and is planned around).
-- **The classic MAPF trade-off, measured.** On these loosely-coupled floors the
-  prioritized planner is already near-optimal, so optimal **CBS matches its
-  throughput and wait but costs up to ~9× the compute** (factory, 12 agents:
-  13.5 vs 123.8 ms/tick — and a single hard seed pushed CBS past 200 ms/tick).
-  CBS earns its keep only on tightly-coupled instances; that is why it ships as
-  an *option* with a node-budget fallback, not the default.
-
-> Numbers are from `node v20.11.0` on an Apple M2, executing the TypeScript
-> engine directly via `vite-node` (a production bundle runs faster); the
-> machine-independent story is the *shape* of each curve and the
-> prioritized-vs-CBS ratio. Full per-seed data is in `docs/benchmark.json`.
-
----
-
-## Exploring the simulation
-
-![Panels hidden and every robot's planned path overlaid — the prioritized planner coordinating a six-floor tower of robots at once](docs/demo.png)
-
-> *Panels hidden (<kbd>U</kbd>) with every robot's planned path overlaid
-> (<kbd>P</kbd>) — the planner coordinating the whole fleet at once. A real frame
-> from the running app; regenerate with
-> [`scripts/screenshot.mjs`](scripts/screenshot.mjs).*
-
-- **Click a robot** to select it: a halo marks it, its planned path is drawn, and
-  an inspector shows its live status, battery, task, and plan.
-- **Show all planned paths** to see the whole fleet's coordinated plans at once.
-- **Floor minimap** gives a 2D top-down plan; clicking a dot selects that robot.
-- **Trends** charts plot throughput, congestion, and elevator load over time.
-- **Camera presets** (iso / top / side) and **single-floor focus** isolate a
-  level for close inspection.
-- **Congestion heatmap** highlights where the fleet stalls (elevator queues,
-  pinch points).
-- **Planner toggle** switches prioritized ↔ CBS live; **Glow** toggles bloom.
-- **Step mode + keyboard shortcuts** (Space, S, P, F, 1/2/3, arrows, [ / ], Esc).
-- **Shareable URL**: the configuration lives in the query string; **Download CSV**
-  exports the run's metric history.
-
----
-
-## Tech stack
-
-| Layer        | Technology                                            |
-| ------------ | ----------------------------------------------------- |
-| Framework    | Next.js 14 (App Router), React 18, TypeScript (strict) |
-| 3D rendering | three.js via React Three Fiber + drei                 |
-| State        | Zustand                                               |
-| Styling      | Tailwind CSS                                          |
-| Testing      | Vitest                                                |
-| Hosting      | Vercel                                                |
-
-## Project structure
-
-```
-src/
-├── sim/                 # framework-free simulation engine (unit-tested)
-│   ├── types.ts         # core domain types
-│   ├── grid.ts          # walkability, neighbours, BFS distance fields
-│   ├── astar.ts         # A* and windowed space-time A* (WHCA*)
-│   ├── reservation.ts   # space-time reservation table
-│   ├── planner.ts       # prioritized multi-agent planner
-│   ├── cbs.ts           # Conflict-Based Search (optimal) planner
-│   ├── elevator.ts      # elevator car + LOOK scheduler
-│   ├── engine.ts        # tasks, robot state machine, battery, tick loop
-│   ├── scenarios.ts     # apartment / factory world generators
-│   └── optimize.ts      # analytical fleet-size optimizer
-├── state/               # Zustand store + real-time tick loop
-├── three/               # R3F scene: building, fleet, elevators, paths, bloom
-├── components/          # control / metrics / optimizer / inspector / minimap UI
-└── app/                 # Next.js app-router entry
-```
-
-## Running locally
+## Run it
 
 ```bash
 npm install
-npm run dev
-# open http://localhost:3000
+npm run dev         # open http://localhost:3000
+npm run test:run    # unit tests
+npm run bench       # benchmark; rewrites docs/benchmark.json
 ```
 
-Other scripts:
+**Tests:** 40 Vitest tests in 8 files; one full-simulation test asserts the collision-free invariant every tick on all three sites. CI runs lint, typecheck, tests, build.
 
-```bash
-npm run build       # production build
-npm test            # run the engine unit tests (watch)
-npm run test:run    # run the unit tests once
-npm run lint        # lint
-```
+## Limitations
 
-## Testing
+- Robots are single-cell and uniform-speed.
+- CBS is optimal only per window, within the node budget; past it, the prioritized planner takes over.
+- The prioritized planner alone is incomplete: it can deadlock on tightly coupled instances. A heuristic priority shuffle recovers; CBS removes the failure mode.
+- Task assignment is greedy under uniform demand. Optimizer traffic constants are hand-tuned, not calibrated from data.
+- Not implemented: heterogeneous robots, ECBS (bounded-suboptimal CBS), deadline-aware tasks, optimizer auto-calibration.
 
-The engine is covered by Vitest unit tests, including an integration test that
-asserts the **collision-free invariant holds on every tick** and that
-cross-floor deliveries complete end-to-end on both scenarios:
+## More
 
-```bash
-npm run test:run
-```
-
-## Deployment (Vercel)
-
-A live instance is deployed at **[mapf-fleet.vercel.app](https://mapf-fleet.vercel.app/)**.
-
-The project is a standard Next.js app and deploys to Vercel with zero
-configuration, so you can spin up your own in a minute:
-
-1. Push this repository to GitHub.
-2. Import it at [vercel.com/new](https://vercel.com/new) — Vercel auto-detects
-   Next.js.
-3. Deploy. (No environment variables are required.)
-
-## Possible extensions
-
-- Heterogeneous robot speeds and footprints (multi-cell robots).
-- Auto-calibrating the optimizer's constants from the measured points.
-- Priority/deadline-aware task assignment instead of unlimited uniform demand.
-- Bounded-suboptimal CBS variants (ECBS) for larger fleets.
-
-## References
-
-The planners follow the primary MAPF literature; the full list with complexity
-notes is in [ALGORITHMS.md](ALGORITHMS.md). The key sources:
-
-- D. Silver. *Cooperative Pathfinding.* AIIDE, 2005. — Windowed Hierarchical
-  Cooperative A\* (WHCA\*), the basis of the prioritized planner.
-- G. Sharon, R. Stern, A. Felner, N. R. Sturtevant. *Conflict-Based Search for
-  Optimal Multi-Agent Pathfinding.* Artificial Intelligence 219 (2015), 40–66. —
-  the CBS planner.
-- R. Stern et al. *Multi-Agent Pathfinding: Definitions, Variants, and
-  Benchmarks.* SoCS, 2019. — vertex/edge/swap conflict terminology.
-
-## Author
-
-Built by **hurjun** as a portfolio project exploring multi-agent path finding,
-fleet coordination, and capacity planning for robot fleets in construction and
-logistics settings.
+- [Details](docs/DETAILS.md): benchmark tables, feature list, long how-it-works, UI tour, site gallery, tech stack, layout, deployment.
+- [ALGORITHMS.md](ALGORITHMS.md): state space, reservation table, WHCA\*, CBS, complexity notes, worked example.
+- References: Silver 2005, Sharon et al. 2015, Stern et al. 2019 (in both files).
 
 ## License
 
 Released under the [MIT License](LICENSE).
+
+— Jun Hur · [portfolio](https://hurjun.github.io) · [KCC 2024 paper](https://hurjun.github.io/asset/kcc2024-kiise-nursing-record-paper.pdf) · hurjun96@gmail.com
